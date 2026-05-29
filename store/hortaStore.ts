@@ -212,9 +212,10 @@ export const useHortaStore = create<HortaState>()(
         set((state) => {
           const horta = state.hortas.find((h) => h.id === hortaId);
           if (!horta) return state;
-          if (horta.solo.nutrientes[atomo] >= 100) return state;
+          const espaco = Math.max(0, 100 - horta.solo.nutrientes[atomo]);
+          if (espaco <= 0) return state;
           const disponivel = horta.estoqueAtomos[atomo];
-          const real = Math.min(quantidade, disponivel);
+          const real = Math.min(quantidade, disponivel, espaco);
           const novoNutrientes = {
             ...horta.solo.nutrientes,
             [atomo]: clamp(horta.solo.nutrientes[atomo] + real, 0, 100),

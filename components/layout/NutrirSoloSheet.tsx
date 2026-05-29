@@ -28,13 +28,16 @@ export function NutrirSoloSheet({ visible, nutriente, horta, onAplicar, onClose 
   const color = NUTRIENT_COLORS[nutriente];
   const soloAtual = horta.solo.nutrientes[nutriente];
   const galaoAtual = horta.estoqueAtomos[nutriente];
-  const qtdReal = Math.min(selectedQtd, galaoAtual);
+  const espaco = Math.max(0, 100 - soloAtual);
+  const qtdReal = Math.min(selectedQtd, galaoAtual, espaco);
   const soloApos = clamp(soloAtual + qtdReal, 0, 100);
   const galaoApos = clamp(galaoAtual - qtdReal, 0, 100);
-  const semEstoque = galaoAtual < 10;
+  const soloMaximo = espaco <= 0;
+  const semEstoque = !soloMaximo && galaoAtual < 10;
+  const bloqueado = soloMaximo || galaoAtual <= 0;
 
   const handleAplicar = () => {
-    if (galaoAtual <= 0) return;
+    if (bloqueado) return;
     onAplicar(nutriente, selectedQtd);
     onClose();
   };
@@ -74,6 +77,14 @@ export function NutrirSoloSheet({ visible, nutriente, horta, onAplicar, onClose 
             </View>
           </View>
 
+          {soloMaximo && (
+            <View style={styles.maxBox}>
+              <Text style={styles.maxText}>
+                ✓ Solo já está em 100% — galão não será consumido.
+              </Text>
+            </View>
+          )}
+
           {semEstoque && (
             <View style={styles.alertBox}>
               <Text style={styles.alertText}>
@@ -83,7 +94,7 @@ export function NutrirSoloSheet({ visible, nutriente, horta, onAplicar, onClose 
           )}
 
           {/* Seletor de quantidade */}
-          <Text style={styles.labelSec}>Quantidade a aplicar:</Text>
+          <Text style={[styles.labelSec, soloMaximo && styles.dimText]}>Quantidade a aplicar:</Text>
           <View style={styles.qtdRow}>
             {QUANTIDADES.map((q) => {
               const indisponivel = q > galaoAtual;
@@ -140,12 +151,12 @@ export function NutrirSoloSheet({ visible, nutriente, horta, onAplicar, onClose 
               <Text style={styles.cancelText}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.aplicarBtn, { backgroundColor: semEstoque ? COLORS.highlight : color }]}
+              style={[styles.aplicarBtn, { backgroundColor: bloqueado ? COLORS.highlight : color }]}
               onPress={handleAplicar}
-              disabled={semEstoque}
+              disabled={bloqueado}
             >
-              <Text style={[styles.aplicarText, semEstoque && { color: COLORS.textDim }]}>
-                Aplicar {qtdReal.toFixed(0)}% de {nutriente}
+              <Text style={[styles.aplicarText, bloqueado && { color: COLORS.textDim }]}>
+                {soloMaximo ? 'Solo já no máximo' : `Aplicar ${qtdReal.toFixed(0)}% de ${nutriente}`}
               </Text>
             </TouchableOpacity>
           </View>
@@ -174,6 +185,15 @@ const styles = StyleSheet.create({
   statusLabel: { color: COLORS.textSecondary, fontSize: 11 },
   statusValue: { fontSize: 22, fontWeight: 'bold' },
   arrow: { color: COLORS.textDim, fontSize: 20 },
+  maxBox: {
+    backgroundColor: COLORS.verde + '18',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: COLORS.verde + '50',
+  },
+  maxText: { color: COLORS.verde, fontSize: 12 },
   alertBox: {
     backgroundColor: COLORS.critico + '18',
     borderRadius: 8,
@@ -183,6 +203,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.critico + '40',
   },
   alertText: { color: COLORS.critico, fontSize: 12 },
+  dimText: { opacity: 0.4 },
   labelSec: { color: COLORS.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 8 },
   qtdRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
   qtdBtn: { flex: 1, borderWidth: 1, borderColor: COLORS.border, borderRadius: 8, paddingVertical: 9, alignItems: 'center' },
