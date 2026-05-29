@@ -36,6 +36,8 @@ interface HortaState {
   aplicarComposto: (hortaId: string, composto: CompoundKey, alvo: AplicacaoAlvo, quantidade: number) => void;
   sintetizarComposto: (hortaId: string, compostoKey: CompoundKey, unidades: number) => void;
   reporGalao: (hortaId: string, atomo: AtomKey) => void;
+  aplicarAtomNoSolo: (hortaId: string, atomo: SoloNutrienteKey, quantidade: number) => void;
+  resetSimulacao: () => void;
 }
 
 const NUTRIENTE_NOMES: Record<SoloNutrienteKey, string> = {
@@ -203,6 +205,48 @@ export const useHortaStore = create<HortaState>()(
             ),
             logs: [...state.logs, log].slice(-MAX_LOGS),
           };
+        });
+      },
+
+      aplicarAtomNoSolo: (hortaId, atomo, quantidade) => {
+        set((state) => {
+          const horta = state.hortas.find((h) => h.id === hortaId);
+          if (!horta) return state;
+          if (horta.solo.nutrientes[atomo] >= 100) return state;
+          const disponivel = horta.estoqueAtomos[atomo];
+          const real = Math.min(quantidade, disponivel);
+          const novoNutrientes = {
+            ...horta.solo.nutrientes,
+            [atomo]: clamp(horta.solo.nutrientes[atomo] + real, 0, 100),
+          };
+          const novoSolo = {
+            ...horta.solo,
+            nutrientes: novoNutrientes,
+            qualidade: calcSoloQualidade(novoNutrientes, horta.solo.ph, horta.solo.umidade),
+          };
+          const log: LogEntry = {
+            id: generateId(), timestamp: new Date().toISOString(),
+            planetaId: horta.planetaId, hortaId,
+            tipo: 'aplicacao',
+            descricao: `${real.toFixed(0)}% de ${atomo} aplicado no solo (+${real.toFixed(0)}% ${atomo})`,
+          };
+          return {
+            hortas: state.hortas.map((h) =>
+              h.id === hortaId
+                ? { ...h, estoqueAtomos: { ...h.estoqueAtomos, [atomo]: clamp(disponivel - real, 0, 100) }, solo: novoSolo }
+                : h
+            ),
+            logs: [...state.logs, log].slice(-MAX_LOGS),
+          };
+        });
+      },
+
+      resetSimulacao: () => {
+        set({
+          hortas: SEED_HORTAS,
+          logs: [],
+          selectedPlanetaId: PLANETAS[0].id,
+          selectedHortaId: SEED_HORTAS[0].id,
         });
       },
     }),

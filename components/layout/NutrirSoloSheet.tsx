@@ -1,59 +1,41 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import { ProgressBar } from '../ui/ProgressBar';
-import { COLORS, NUTRIENT_COLORS, COMPOUND_COLORS } from '../../constants/colors';
-import { REACTIONS } from '../../data/reactions';
-import type { SoloNutrienteKey, CompoundKey, Horta } from '../../types';
+import { COLORS, NUTRIENT_COLORS } from '../../constants/colors';
+import { clamp } from '../../utils/formatters';
+import type { SoloNutrienteKey, Horta } from '../../types';
 
 const NUTRIENTE_NOMES: Record<SoloNutrienteKey, string> = {
   N: 'Nitrogênio', P: 'Fósforo', K: 'Potássio',
   Ca: 'Cálcio', Mg: 'Magnésio', S: 'Enxofre',
 };
 
-// Qual composto é mais relevante para cada nutriente
-const NUTRIENTE_RECOMENDADO: Partial<Record<SoloNutrienteKey, CompoundKey>> = {
-  N: 'NH3',
-  Ca: 'CaCO3',
-};
-
-// Descrição curta do efeito de cada composto no solo
-const EFEITO_DESCRICAO: Record<CompoundKey, string> = {
-  H2O:   '+umidade do solo',
-  NH3:   '+15% N por 10% aplicado',
-  CaCO3: '+12% Ca, +pH por 10% aplicado',
-  H2CO3: '−pH (acidifica), +umidade leve',
-};
-
 const QUANTIDADES = [10, 20, 30, 40, 50];
-
-// Apenas compostos que têm efeito no solo
-const COMPOSTOS_SOLO: CompoundKey[] = ['H2O', 'NH3', 'CaCO3', 'H2CO3'];
 
 interface Props {
   visible: boolean;
   nutriente: SoloNutrienteKey | null;
   horta: Horta;
-  onAplicar: (composto: CompoundKey, quantidade: number) => void;
+  onAplicar: (atomo: SoloNutrienteKey, quantidade: number) => void;
   onClose: () => void;
 }
 
 export function NutrirSoloSheet({ visible, nutriente, horta, onAplicar, onClose }: Props) {
-  const [selectedComposto, setSelectedComposto] = useState<CompoundKey>('NH3');
   const [selectedQtd, setSelectedQtd] = useState(10);
 
   if (!nutriente) return null;
 
-  const recomendado = NUTRIENTE_RECOMENDADO[nutriente];
-  const nutriColor = NUTRIENT_COLORS[nutriente];
-  const nutriValue = horta.solo.nutrientes[nutriente];
+  const color = NUTRIENT_COLORS[nutriente];
+  const soloAtual = horta.solo.nutrientes[nutriente];
+  const galaoAtual = horta.estoqueAtomos[nutriente];
+  const qtdReal = Math.min(selectedQtd, galaoAtual);
+  const soloApos = clamp(soloAtual + qtdReal, 0, 100);
+  const galaoApos = clamp(galaoAtual - qtdReal, 0, 100);
+  const semEstoque = galaoAtual < 10;
 
   const handleAplicar = () => {
-    const estoque = horta.estoqueCompostos[selectedComposto];
-    if (estoque < selectedQtd) {
-      Alert.alert('Estoque insuficiente', `Disponível: ${estoque.toFixed(0)}% de ${selectedComposto}`);
-      return;
-    }
-    onAplicar(selectedComposto, selectedQtd);
+    if (galaoAtual <= 0) return;
+    onAplicar(nutriente, selectedQtd);
     onClose();
   };
 
@@ -61,76 +43,96 @@ export function NutrirSoloSheet({ visible, nutriente, horta, onAplicar, onClose 
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.sheet}>
+
           {/* Header */}
           <View style={styles.header}>
             <View>
               <Text style={styles.headerSub}>Nutrir Solo</Text>
-              <Text style={[styles.headerTitle, { color: nutriColor }]}>
+              <Text style={[styles.headerTitle, { color }]}>
                 {nutriente} — {NUTRIENTE_NOMES[nutriente]}
               </Text>
             </View>
-            <View style={styles.nutrienteValBox}>
-              <Text style={[styles.nutrienteVal, { color: nutriColor }]}>
-                {nutriValue.toFixed(0)}%
+            <TouchableOpacity onPress={onClose}>
+              <Text style={styles.closeBtn}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Estado atual */}
+          <View style={styles.statusRow}>
+            <View style={styles.statusBox}>
+              <Text style={styles.statusLabel}>Solo atual</Text>
+              <Text style={[styles.statusValue, { color }]}>{soloAtual.toFixed(0)}%</Text>
+              <ProgressBar value={soloAtual} color={color} height={5} />
+            </View>
+            <Text style={styles.arrow}>→</Text>
+            <View style={styles.statusBox}>
+              <Text style={styles.statusLabel}>Galão disponível</Text>
+              <Text style={[styles.statusValue, { color: semEstoque ? COLORS.critico : color }]}>
+                {galaoAtual.toFixed(0)}%
               </Text>
-              <Text style={styles.nutrienteValLabel}>atual</Text>
+              <ProgressBar value={galaoAtual} color={semEstoque ? COLORS.critico : color} height={5} />
             </View>
           </View>
 
-          {/* Seletor de composto */}
-          <Text style={styles.sectionLabel}>Escolha o composto:</Text>
-          <ScrollView style={styles.compostoList} showsVerticalScrollIndicator={false}>
-            {COMPOSTOS_SOLO.map((key) => {
-              const color = COMPOUND_COLORS[key];
-              const estoque = horta.estoqueCompostos[key];
-              const isSelected = selectedComposto === key;
-              const isRecomendado = key === recomendado;
-
-              return (
-                <TouchableOpacity
-                  key={key}
-                  style={[styles.compostoItem, isSelected && { borderColor: color, backgroundColor: color + '15' }]}
-                  onPress={() => setSelectedComposto(key)}
-                >
-                  <View style={styles.compostoTop}>
-                    <View style={styles.compostoLeft}>
-                      <Text style={[styles.compostoNome, { color }]}>
-                        {REACTIONS.find(r => r.composto === key)?.nomeExibicao ?? key}
-                      </Text>
-                      {isRecomendado && (
-                        <View style={[styles.recBadge, { borderColor: color }]}>
-                          <Text style={[styles.recText, { color }]}>Recomendado</Text>
-                        </View>
-                      )}
-                    </View>
-                    <Text style={[styles.compostoEstoque, { color: estoque < 10 ? COLORS.critico : color }]}>
-                      {estoque.toFixed(0)}%
-                    </Text>
-                  </View>
-                  <ProgressBar value={estoque} color={estoque < 10 ? COLORS.critico : color} height={4} />
-                  <Text style={styles.compostoEfeito}>{EFEITO_DESCRICAO[key]}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
+          {semEstoque && (
+            <View style={styles.alertBox}>
+              <Text style={styles.alertText}>
+                Galão de {nutriente} insuficiente. Reponha na aba Estoque.
+              </Text>
+            </View>
+          )}
 
           {/* Seletor de quantidade */}
-          <Text style={styles.sectionLabel}>Quantidade a aplicar:</Text>
+          <Text style={styles.labelSec}>Quantidade a aplicar:</Text>
           <View style={styles.qtdRow}>
             {QUANTIDADES.map((q) => {
-              const color = COMPOUND_COLORS[selectedComposto];
-              const isSelected = selectedQtd === q;
+              const indisponivel = q > galaoAtual;
               return (
                 <TouchableOpacity
                   key={q}
-                  style={[styles.qtdBtn, isSelected && { backgroundColor: color + '33', borderColor: color }]}
-                  onPress={() => setSelectedQtd(q)}
+                  style={[
+                    styles.qtdBtn,
+                    selectedQtd === q && !indisponivel && { backgroundColor: color + '33', borderColor: color },
+                    indisponivel && styles.qtdBtnOff,
+                  ]}
+                  onPress={() => !indisponivel && setSelectedQtd(q)}
+                  disabled={indisponivel}
                 >
-                  <Text style={[styles.qtdText, isSelected && { color }]}>{q}%</Text>
+                  <Text style={[
+                    styles.qtdText,
+                    selectedQtd === q && !indisponivel && { color, fontWeight: 'bold' },
+                    indisponivel && styles.qtdTextOff,
+                  ]}>
+                    {q}%
+                  </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
+
+          {/* Preview do resultado */}
+          {!semEstoque && (
+            <View style={styles.previewBox}>
+              <View style={styles.previewRow}>
+                <Text style={styles.previewLabel}>Solo {nutriente}</Text>
+                <Text style={styles.previewChange}>
+                  <Text style={{ color }}>{soloAtual.toFixed(0)}%</Text>
+                  {'  →  '}
+                  <Text style={{ color: COLORS.verde }}>{soloApos.toFixed(0)}%</Text>
+                  {'  (+' + qtdReal.toFixed(0) + '%)'}
+                </Text>
+              </View>
+              <View style={styles.previewRow}>
+                <Text style={styles.previewLabel}>Galão {nutriente}</Text>
+                <Text style={styles.previewChange}>
+                  <Text style={{ color }}>{galaoAtual.toFixed(0)}%</Text>
+                  {'  →  '}
+                  <Text style={{ color: COLORS.atencao }}>{galaoApos.toFixed(0)}%</Text>
+                  {'  (−' + qtdReal.toFixed(0) + '%)'}
+                </Text>
+              </View>
+            </View>
+          )}
 
           {/* Ações */}
           <View style={styles.actions}>
@@ -138,14 +140,16 @@ export function NutrirSoloSheet({ visible, nutriente, horta, onAplicar, onClose 
               <Text style={styles.cancelText}>Cancelar</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.aplicarBtn, { backgroundColor: COMPOUND_COLORS[selectedComposto] }]}
+              style={[styles.aplicarBtn, { backgroundColor: semEstoque ? COLORS.highlight : color }]}
               onPress={handleAplicar}
+              disabled={semEstoque}
             >
-              <Text style={styles.aplicarText}>
-                Aplicar {selectedQtd}% de {selectedComposto}
+              <Text style={[styles.aplicarText, semEstoque && { color: COLORS.textDim }]}>
+                Aplicar {qtdReal.toFixed(0)}% de {nutriente}
               </Text>
             </TouchableOpacity>
           </View>
+
         </View>
       </View>
     </Modal>
@@ -160,38 +164,41 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     padding: 20,
     paddingBottom: 36,
-    maxHeight: '85%',
   },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
   headerSub: { color: COLORS.textSecondary, fontSize: 12, marginBottom: 2 },
   headerTitle: { fontSize: 20, fontWeight: 'bold' },
-  nutrienteValBox: { alignItems: 'flex-end' },
-  nutrienteVal: { fontSize: 28, fontWeight: 'bold' },
-  nutrienteValLabel: { color: COLORS.textSecondary, fontSize: 11 },
-  sectionLabel: { color: COLORS.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 8 },
-  compostoList: { maxHeight: 240, marginBottom: 14 },
-  compostoItem: {
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 10,
+  closeBtn: { color: COLORS.textSecondary, fontSize: 18, padding: 4 },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
+  statusBox: { flex: 1, gap: 4 },
+  statusLabel: { color: COLORS.textSecondary, fontSize: 11 },
+  statusValue: { fontSize: 22, fontWeight: 'bold' },
+  arrow: { color: COLORS.textDim, fontSize: 20 },
+  alertBox: {
+    backgroundColor: COLORS.critico + '18',
+    borderRadius: 8,
     padding: 10,
-    marginBottom: 8,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: COLORS.critico + '40',
   },
-  compostoTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  compostoLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  compostoNome: { fontSize: 14, fontWeight: '600' },
-  recBadge: { borderWidth: 1, borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1 },
-  recText: { fontSize: 9, fontWeight: '600' },
-  compostoEstoque: { fontSize: 14, fontWeight: 'bold' },
-  compostoEfeito: { color: COLORS.textDim, fontSize: 11, marginTop: 4 },
-  qtdRow: { flexDirection: 'row', gap: 8, marginBottom: 18 },
-  qtdBtn: { flex: 1, borderWidth: 1, borderColor: COLORS.border, borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
-  qtdText: { color: COLORS.textSecondary, fontSize: 13 },
+  alertText: { color: COLORS.critico, fontSize: 12 },
+  labelSec: { color: COLORS.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 8 },
+  qtdRow: { flexDirection: 'row', gap: 8, marginBottom: 14 },
+  qtdBtn: { flex: 1, borderWidth: 1, borderColor: COLORS.border, borderRadius: 8, paddingVertical: 9, alignItems: 'center' },
+  qtdBtnOff: { opacity: 0.3 },
+  qtdText: { color: COLORS.textSecondary, fontSize: 14 },
+  qtdTextOff: { color: COLORS.textDim },
+  previewBox: {
+    backgroundColor: COLORS.highlight,
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 16,
+    gap: 6,
+  },
+  previewRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  previewLabel: { color: COLORS.textSecondary, fontSize: 13 },
+  previewChange: { fontSize: 13 },
   actions: { flexDirection: 'row', gap: 10 },
   cancelBtn: { flex: 1, borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, padding: 13, alignItems: 'center' },
   cancelText: { color: COLORS.textSecondary, fontSize: 14 },

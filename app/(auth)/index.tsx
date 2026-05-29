@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { GradientBackground } from '../../components/ui/GradientBackground';
 import { useAppStore } from '../../store/appStore';
+import { useHortaStore } from '../../store/hortaStore';
 import { COLORS } from '../../constants/colors';
-
-const { width } = Dimensions.get('window');
 
 const SLIDES = [
   {
@@ -39,6 +38,7 @@ export default function Onboarding() {
   const [page, setPage] = useState(0);
   const completeTutorial = useAppStore((s) => s.completeTutorial);
   const tutorialCompleted = useAppStore((s) => s.tutorialCompleted);
+  const resetSimulacao = useHortaStore((s) => s.resetSimulacao);
   const isReview = tutorialCompleted;
   const isLast = page === SLIDES.length - 1;
   const slide = SLIDES[page];
@@ -87,6 +87,31 @@ export default function Onboarding() {
           {isLast ? (isReview ? 'Fechar Tutorial' : 'Iniciar Missão') : 'Próximo'}
         </Text>
       </TouchableOpacity>
+
+      {isReview && isLast && (
+        <TouchableOpacity
+          style={styles.resetBtn}
+          onPress={() =>
+            Alert.alert(
+              'Reiniciar Simulação',
+              'Todas as hortas voltarão ao estado inicial e os logs serão apagados. Confirmar?',
+              [
+                { text: 'Cancelar', style: 'cancel' },
+                {
+                  text: 'Reiniciar',
+                  style: 'destructive',
+                  onPress: () => {
+                    resetSimulacao();
+                    router.replace('/(tabs)/estufa');
+                  },
+                },
+              ]
+            )
+          }
+        >
+          <Text style={styles.resetText}>🔄 Reiniciar Simulação</Text>
+        </TouchableOpacity>
+      )}
     </GradientBackground>
   );
 }
@@ -104,4 +129,13 @@ const styles = StyleSheet.create({
   dotActive: { backgroundColor: COLORS.ciano, width: 20 },
   btn: { backgroundColor: COLORS.ciano, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
   btnText: { color: '#000', fontWeight: 'bold', fontSize: 17 },
+  resetBtn: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: COLORS.critico + '70',
+    borderRadius: 14,
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
+  resetText: { color: COLORS.critico, fontSize: 15, fontWeight: '600' },
 });

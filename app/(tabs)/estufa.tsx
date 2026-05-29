@@ -10,19 +10,22 @@ import { NutrienteCard } from '../../components/horta/NutrienteCard';
 import { NutrirSoloSheet } from '../../components/layout/NutrirSoloSheet';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { useHortaStore } from '../../store/hortaStore';
-import { COLORS, ATOM_COLORS, COMPOUND_COLORS } from '../../constants/colors';
-import { REACTIONS } from '../../data/reactions';
-import type { AtomKey, SoloNutrienteKey, CompoundKey } from '../../types';
+import { COLORS, ATOM_COLORS, NUTRIENT_COLORS } from '../../constants/colors';
+import type { AtomKey, SoloNutrienteKey } from '../../types';
 
 const SOLO_NUTRIENTES: SoloNutrienteKey[] = ['N', 'P', 'K', 'Ca', 'Mg', 'S'];
 const ATOMS: AtomKey[] = ['N', 'P', 'K', 'Ca', 'Mg', 'S', 'O', 'H', 'C'];
-const COMPOSTOS_SOLO: CompoundKey[] = ['H2O', 'NH3', 'CaCO3', 'H2CO3'];
-const QUANTIDADES = [10, 20, 30];
+const QUANTIDADES_TUDO = [10, 20, 30];
+
+const NUTRIENTE_NOMES: Record<SoloNutrienteKey, string> = {
+  N: 'Nitrogênio', P: 'Fósforo', K: 'Potássio',
+  Ca: 'Cálcio', Mg: 'Magnésio', S: 'Enxofre',
+};
 
 export default function EstufaScreen() {
   const horta = useHortaStore((s) => s.getHortaAtual());
   const planeta = useHortaStore((s) => s.getPlanetaAtual());
-  const aplicarComposto = useHortaStore((s) => s.aplicarComposto);
+  const aplicarAtomNoSolo = useHortaStore((s) => s.aplicarAtomNoSolo);
 
   const [sheetNutriente, setSheetNutriente] = useState<SoloNutrienteKey | null>(null);
   const [nutrirTudoVisible, setNutrirTudoVisible] = useState(false);
@@ -36,16 +39,13 @@ export default function EstufaScreen() {
     );
   }
 
-  const handleAplicar = (composto: CompoundKey, quantidade: number) => {
-    aplicarComposto(horta.id, composto, 'solo', quantidade);
-  };
-
-  const compostosProntos = COMPOSTOS_SOLO.filter(
-    (k) => horta.estoqueCompostos[k] >= qtdTudo
+  // Nutrientes cujo galão tem estoque suficiente E o solo ainda não está em 100%
+  const nutrientesProntos = SOLO_NUTRIENTES.filter(
+    (n) => horta.estoqueAtomos[n] >= qtdTudo && horta.solo.nutrientes[n] < 100
   );
 
   const handleNutrirTudo = () => {
-    compostosProntos.forEach((k) => aplicarComposto(horta.id, k, 'solo', qtdTudo));
+    nutrientesProntos.forEach((n) => aplicarAtomNoSolo(horta.id, n, qtdTudo));
     setNutrirTudoVisible(false);
   };
 
@@ -85,7 +85,7 @@ export default function EstufaScreen() {
           <View>
             <Text style={styles.nutrirTudoLabel}>Nutrir Tudo</Text>
             <Text style={styles.nutrirTudoSub}>
-              Aplica todos os compostos disponíveis no solo de uma vez
+              Aplica cada elemento do galão direto no solo de uma só vez
             </Text>
           </View>
         </TouchableOpacity>
@@ -105,22 +105,27 @@ export default function EstufaScreen() {
         visible={sheetNutriente !== null}
         nutriente={sheetNutriente}
         horta={horta}
-        onAplicar={handleAplicar}
+        onAplicar={(atomo, qtd) => aplicarAtomNoSolo(horta.id, atomo, qtd)}
         onClose={() => setSheetNutriente(null)}
       />
 
       {/* Modal nutrir tudo */}
-      <Modal visible={nutrirTudoVisible} transparent animationType="slide" onRequestClose={() => setNutrirTudoVisible(false)}>
+      <Modal
+        visible={nutrirTudoVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setNutrirTudoVisible(false)}
+      >
         <View style={styles.overlay}>
           <View style={styles.sheet}>
             <Text style={styles.sheetTitle}>⚡ Nutrir Tudo</Text>
             <Text style={styles.sheetSub}>
-              Aplica todos os compostos com estoque suficiente no solo de uma vez.
+              Aplica a quantidade escolhida de cada elemento diretamente no solo. Apenas os galões com estoque suficiente são aplicados.
             </Text>
 
-            <Text style={styles.labelSec}>Quantidade por composto:</Text>
+            <Text style={styles.labelSec}>Quantidade por nutriente:</Text>
             <View style={styles.qtdRow}>
-              {QUANTIDADES.map((q) => (
+              {QUANTIDADES_TUDO.map((q) => (
                 <TouchableOpacity
                   key={q}
                   style={[styles.qtdBtn, qtdTudo === q && styles.qtdBtnActive]}
@@ -131,42 +136,47 @@ export default function EstufaScreen() {
               ))}
             </View>
 
-            <Text style={styles.labelSec}>Compostos que serão aplicados:</Text>
-            {COMPOSTOS_SOLO.map((k) => {
-              const estoque = horta.estoqueCompostos[k];
-              const disponivel = estoque >= qtdTudo;
-              const color = COMPOUND_COLORS[k];
-              const nome = REACTIONS.find((r) => r.composto === k)?.nomeExibicao ?? k;
+            <Text style={styles.labelSec}>Galões disponíveis:</Text>
+            {SOLO_NUTRIENTES.map((n) => {
+              const galao = horta.estoqueAtomos[n];
+              const solo = horta.solo.nutrientes[n];
+              const soloMaximo = solo >= 100;
+              const disponivel = galao >= qtdTudo && !soloMaximo;
+              const color = NUTRIENT_COLORS[n];
               return (
-                <View key={k} style={[styles.compostoRow, !disponivel && styles.compostoRowOff]}>
-                  <View style={styles.compostoRowLeft}>
-                    <View style={[styles.dot, { backgroundColor: disponivel ? color : COLORS.textDim }]} />
-                    <Text style={[styles.compostoNome, { color: disponivel ? color : COLORS.textDim }]}>
-                      {nome}
-                    </Text>
+                <View key={n} style={[styles.nutrienteRow, !disponivel && styles.nutrienteRowOff]}>
+                  <View style={[styles.nBadge, { borderColor: disponivel ? color : COLORS.textDim }]}>
+                    <Text style={[styles.nSimbolo, { color: disponivel ? color : COLORS.textDim }]}>{n}</Text>
                   </View>
-                  <View style={styles.compostoRowRight}>
-                    <ProgressBar
-                      value={estoque}
-                      color={disponivel ? color : COLORS.textDim}
-                      height={4}
-                      style={styles.compostoBar}
-                    />
-                    <Text style={[styles.compostoEst, { color: disponivel ? color : COLORS.textDim }]}>
-                      {estoque.toFixed(0)}%
+                  <View style={styles.nInfo}>
+                    <Text style={[styles.nNome, { color: disponivel ? color : COLORS.textDim }]}>
+                      {NUTRIENTE_NOMES[n]}
                     </Text>
-                    {!disponivel && (
-                      <Text style={styles.insuficiente}>insuficiente</Text>
-                    )}
+                    <View style={styles.nBars}>
+                      <View style={styles.nBarItem}>
+                        <Text style={styles.nBarLabel}>Solo</Text>
+                        <ProgressBar value={solo} color={disponivel ? color : COLORS.textDim} height={4} style={styles.nBar} />
+                        <Text style={[styles.nBarVal, { color: disponivel ? color : COLORS.textDim }]}>{solo.toFixed(0)}%</Text>
+                      </View>
+                      <View style={styles.nBarItem}>
+                        <Text style={styles.nBarLabel}>Galão</Text>
+                        <ProgressBar value={galao} color={disponivel ? color : COLORS.textDim} height={4} style={styles.nBar} />
+                        <Text style={[styles.nBarVal, { color: disponivel ? color : COLORS.textDim }]}>{galao.toFixed(0)}%</Text>
+                      </View>
+                    </View>
                   </View>
+                  {soloMaximo
+                    ? <Text style={styles.maximo}>✓ máximo</Text>
+                    : !disponivel && <Text style={styles.insuf}>sem estoque</Text>
+                  }
                 </View>
               );
             })}
 
-            {compostosProntos.length === 0 && (
+            {nutrientesProntos.length === 0 && (
               <View style={styles.alertBox}>
                 <Text style={styles.alertText}>
-                  Nenhum composto tem estoque suficiente para {qtdTudo}%. Reduza a quantidade ou sintetize mais compostos.
+                  Nenhum galão tem {qtdTudo}% disponível. Reduza a quantidade ou reponha os galões na aba Estoque.
                 </Text>
               </View>
             )}
@@ -176,12 +186,12 @@ export default function EstufaScreen() {
                 <Text style={styles.cancelText}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.confirmBtn, compostosProntos.length === 0 && styles.confirmBtnOff]}
+                style={[styles.confirmBtn, nutrientesProntos.length === 0 && styles.confirmBtnOff]}
                 onPress={handleNutrirTudo}
-                disabled={compostosProntos.length === 0}
+                disabled={nutrientesProntos.length === 0}
               >
                 <Text style={styles.confirmText}>
-                  Aplicar ({compostosProntos.length} composto{compostosProntos.length !== 1 ? 's' : ''})
+                  Aplicar ({nutrientesProntos.length}/{SOLO_NUTRIENTES.length} nutrientes)
                 </Text>
               </TouchableOpacity>
             </View>
@@ -225,7 +235,6 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
 
-  // Modal nutrir tudo
   overlay: { flex: 1, backgroundColor: '#000000BB', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: COLORS.card,
@@ -237,44 +246,43 @@ const styles = StyleSheet.create({
   sheetTitle: { color: COLORS.ciano, fontSize: 20, fontWeight: 'bold', marginBottom: 4 },
   sheetSub: { color: COLORS.textSecondary, fontSize: 13, marginBottom: 16, lineHeight: 18 },
   labelSec: { color: COLORS.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 8 },
-  qtdRow: { flexDirection: 'row', gap: 10, marginBottom: 16 },
-  qtdBtn: {
-    flex: 1, borderWidth: 1, borderColor: COLORS.border,
-    borderRadius: 8, paddingVertical: 9, alignItems: 'center',
-  },
+  qtdRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
+  qtdBtn: { flex: 1, borderWidth: 1, borderColor: COLORS.border, borderRadius: 8, paddingVertical: 9, alignItems: 'center' },
   qtdBtnActive: { backgroundColor: COLORS.ciano + '28', borderColor: COLORS.ciano },
   qtdText: { color: COLORS.textSecondary, fontSize: 15 },
   qtdTextActive: { color: COLORS.ciano, fontWeight: 'bold' },
-  compostoRow: {
+
+  nutrienteRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 7,
+    paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.highlight,
+    gap: 10,
   },
-  compostoRowOff: { opacity: 0.45 },
-  compostoRowLeft: { flexDirection: 'row', alignItems: 'center', gap: 8, width: 140 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  compostoNome: { fontSize: 13, fontWeight: '600' },
-  compostoRowRight: { flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 },
-  compostoBar: { flex: 1 },
-  compostoEst: { fontSize: 12, fontWeight: 'bold', width: 32, textAlign: 'right' },
-  insuficiente: { color: COLORS.critico, fontSize: 9 },
+  nutrienteRowOff: { opacity: 0.4 },
+  nBadge: { width: 34, height: 34, borderRadius: 17, borderWidth: 1.5, justifyContent: 'center', alignItems: 'center' },
+  nSimbolo: { fontSize: 12, fontWeight: 'bold' },
+  nInfo: { flex: 1 },
+  nNome: { fontSize: 11, marginBottom: 4 },
+  nBars: { gap: 3 },
+  nBarItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  nBarLabel: { color: COLORS.textDim, fontSize: 9, width: 28 },
+  nBar: { flex: 1 },
+  nBarVal: { fontSize: 10, width: 28, textAlign: 'right' },
+  insuf: { color: COLORS.critico, fontSize: 9 },
+
   alertBox: {
     backgroundColor: COLORS.critico + '18',
     borderRadius: 8,
     padding: 10,
-    marginTop: 10,
+    marginTop: 8,
     borderWidth: 1,
     borderColor: COLORS.critico + '40',
   },
   alertText: { color: COLORS.critico, fontSize: 12, lineHeight: 17 },
-  actions: { flexDirection: 'row', gap: 10, marginTop: 18 },
-  cancelBtn: {
-    flex: 1, borderWidth: 1, borderColor: COLORS.border,
-    borderRadius: 10, padding: 13, alignItems: 'center',
-  },
+  actions: { flexDirection: 'row', gap: 10, marginTop: 16 },
+  cancelBtn: { flex: 1, borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, padding: 13, alignItems: 'center' },
   cancelText: { color: COLORS.textSecondary, fontSize: 14 },
   confirmBtn: { flex: 2, backgroundColor: COLORS.ciano, borderRadius: 10, padding: 13, alignItems: 'center' },
   confirmBtnOff: { backgroundColor: COLORS.highlight },
