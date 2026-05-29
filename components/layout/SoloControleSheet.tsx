@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from 'react-native';
+import { CustomAlert } from '../ui/CustomAlert';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { ProgressBar } from '../ui/ProgressBar';
 import { COLORS } from '../../constants/colors';
 import type { Horta, CompoundKey } from '../../types';
@@ -39,6 +41,7 @@ export function SoloControleSheet({ visible, horta, onAplicarComposto, onClose }
   const [qtdAgua, setQtdAgua] = useState(10);
   const [qtdPH, setQtdPH]     = useState(10);
   const [compostoSel, setCompostoSel] = useState<CompoundKey>('CaCO3');
+  const { alertVisible, alertTitle, alertMessage, alertButtons, showAlert, hideAlert } = useCustomAlert();
 
   const solo  = horta.solo;
   const h2o   = horta.estoqueCompostos.H2O;
@@ -52,19 +55,20 @@ export function SoloControleSheet({ visible, horta, onAplicarComposto, onClose }
   ));
 
   const handleAgua = () => {
-    if (h2o < qtdAgua) { Alert.alert('Estoque insuficiente', `H₂O disponível: ${h2o.toFixed(0)}%`); return; }
+    if (h2o < qtdAgua) { showAlert('Estoque insuficiente', `H₂O disponível: ${h2o.toFixed(0)}%`); return; }
     onAplicarComposto('H2O', 'solo', qtdAgua);
   };
 
   const handlePH = () => {
     if (estoqueComp < qtdPH) {
-      Alert.alert('Estoque insuficiente', `${compostoSel} disponível: ${estoqueComp.toFixed(0)}%`);
+      showAlert('Estoque insuficiente', `${compostoSel} disponível: ${estoqueComp.toFixed(0)}%`);
       return;
     }
     onAplicarComposto(compostoSel, 'solo', qtdPH);
   };
 
   return (
+    <>
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={s.overlay}>
         <View style={s.sheet}>
@@ -195,6 +199,15 @@ export function SoloControleSheet({ visible, horta, onAplicarComposto, onClose }
         </View>
       </View>
     </Modal>
+
+    <CustomAlert
+      visible={alertVisible}
+      title={alertTitle}
+      message={alertMessage}
+      buttons={alertButtons}
+      onClose={hideAlert}
+    />
+    </>
   );
 }
 

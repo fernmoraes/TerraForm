@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from 'react-native';
+import { CustomAlert } from '../ui/CustomAlert';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { ProgressBar } from '../ui/ProgressBar';
 import { COLORS } from '../../constants/colors';
 import type { Horta } from '../../types';
@@ -38,9 +40,10 @@ function nivelHumidade(v: number) {
 }
 
 export function AtmosferaSheet({ visible, horta, onAplicarH2OAr, onInjetarO2, onClose }: Props) {
-  const [qtdCO2, setQtdCO2]       = useState(10);
-  const [qtdO2, setQtdO2]         = useState(10);
+  const [qtdCO2, setQtdCO2]           = useState(10);
+  const [qtdO2, setQtdO2]             = useState(10);
   const [qtdHumidade, setQtdHumidade] = useState(10);
+  const { alertVisible, alertTitle, alertMessage, alertButtons, showAlert, hideAlert } = useCustomAlert();
 
   const ar   = horta.ar;
   const h2o  = horta.estoqueCompostos.H2O;
@@ -51,21 +54,22 @@ export function AtmosferaSheet({ visible, horta, onAplicarH2OAr, onInjetarO2, on
   const nHum = nivelHumidade(ar.umidade);
 
   const aplicarCO2 = () => {
-    if (h2o < qtdCO2) { Alert.alert('Estoque insuficiente', `H₂O disponível: ${h2o.toFixed(0)}%`); return; }
+    if (h2o < qtdCO2) { showAlert('Estoque insuficiente', `H₂O disponível: ${h2o.toFixed(0)}%`); return; }
     onAplicarH2OAr(qtdCO2);
   };
 
   const aplicarO2 = () => {
-    if (gO < qtdO2) { Alert.alert('Estoque insuficiente', `Galão O disponível: ${gO.toFixed(0)}%`); return; }
+    if (gO < qtdO2) { showAlert('Estoque insuficiente', `Galão O disponível: ${gO.toFixed(0)}%`); return; }
     onInjetarO2(qtdO2);
   };
 
   const aplicarHumidade = () => {
-    if (h2o < qtdHumidade) { Alert.alert('Estoque insuficiente', `H₂O disponível: ${h2o.toFixed(0)}%`); return; }
+    if (h2o < qtdHumidade) { showAlert('Estoque insuficiente', `H₂O disponível: ${h2o.toFixed(0)}%`); return; }
     onAplicarH2OAr(qtdHumidade);
   };
 
   return (
+    <>
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={s.overlay}>
         <View style={s.sheet}>
@@ -167,6 +171,15 @@ export function AtmosferaSheet({ visible, horta, onAplicarH2OAr, onInjetarO2, on
         </View>
       </View>
     </Modal>
+
+    <CustomAlert
+      visible={alertVisible}
+      title={alertTitle}
+      message={alertMessage}
+      buttons={alertButtons}
+      onClose={hideAlert}
+    />
+  </>
   );
 }
 

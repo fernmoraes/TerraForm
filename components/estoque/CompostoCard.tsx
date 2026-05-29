@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import { CustomAlert } from '../ui/CustomAlert';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { ProgressBar } from '../ui/ProgressBar';
 import { COLORS, COMPOUND_COLORS } from '../../constants/colors';
 import { REACTIONS } from '../../data/reactions';
@@ -19,6 +21,7 @@ const QUANTIDADES = [10, 20, 30, 40, 50];
 
 export function CompostoCard({ compoundKey, value, onAplicar }: Props) {
   const [modalVisible, setModalVisible] = useState(false);
+  const { alertVisible, alertTitle, alertMessage, alertButtons, showAlert, hideAlert } = useCustomAlert();
   const [selectedAlvo, setSelectedAlvo] = useState<AplicacaoAlvo>('solo');
   const [selectedQtd, setSelectedQtd] = useState(10);
   const color = COMPOUND_COLORS[compoundKey];
@@ -26,7 +29,7 @@ export function CompostoCard({ compoundKey, value, onAplicar }: Props) {
 
   const handleConfirmar = () => {
     if (value < selectedQtd) {
-      Alert.alert('Estoque insuficiente', `Disponível: ${value.toFixed(0)}%`);
+      showAlert('Estoque insuficiente', `Disponível: ${value.toFixed(0)}%`);
       return;
     }
     onAplicar(selectedAlvo, selectedQtd);
@@ -98,6 +101,14 @@ export function CompostoCard({ compoundKey, value, onAplicar }: Props) {
           </View>
         </View>
       </Modal>
+
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        buttons={alertButtons}
+        onClose={hideAlert}
+      />
     </>
   );
 }

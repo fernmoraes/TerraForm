@@ -1,6 +1,7 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { ProgressBar } from '../ui/ProgressBar';
+import { CustomAlert } from '../ui/CustomAlert';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { COLORS, ATOM_COLORS } from '../../constants/colors';
 import { THRESHOLDS } from '../../constants/thresholds';
 import type { AtomKey } from '../../types';
@@ -17,39 +18,51 @@ interface Props {
 }
 
 export function GallonCard({ atomKey, value, onRepor }: Props) {
+  const { alertVisible, alertTitle, alertMessage, alertButtons, showAlert, hideAlert } = useCustomAlert();
+
   const isCritico = value < THRESHOLDS.atomoCritico;
   const isAtencao = !isCritico && value < THRESHOLDS.atomoAtencao;
   const color = isCritico ? COLORS.critico : isAtencao ? COLORS.atencao : ATOM_COLORS[atomKey];
 
   const handleRepor = () => {
-    Alert.alert(
+    showAlert(
       'Repor Galão',
       `Repor ${ATOM_NOMES[atomKey]} a 100%?`,
       [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Repor', onPress: onRepor },
+        { label: 'Cancelar', onPress: () => {}, style: 'cancel' },
+        { label: 'Repor', onPress: onRepor },
       ]
     );
   };
 
   return (
-    <View style={[styles.card, isCritico && styles.cardCritico]}>
-      <View style={styles.left}>
-        <View style={[styles.symbolBadge, { backgroundColor: color + '22', borderColor: color }]}>
-          <Text style={[styles.symbol, { color }]}>{atomKey}</Text>
-        </View>
-        <View style={styles.info}>
-          <Text style={styles.nome}>{ATOM_NOMES[atomKey]}</Text>
-          <View style={styles.barRow}>
-            <ProgressBar value={value} color={color} height={5} style={styles.bar} />
-            <Text style={[styles.percent, { color }]}>{value.toFixed(0)}%</Text>
+    <>
+      <View style={[styles.card, isCritico && styles.cardCritico]}>
+        <View style={styles.left}>
+          <View style={[styles.symbolBadge, { backgroundColor: color + '22', borderColor: color }]}>
+            <Text style={[styles.symbol, { color }]}>{atomKey}</Text>
+          </View>
+          <View style={styles.info}>
+            <Text style={styles.nome}>{ATOM_NOMES[atomKey]}</Text>
+            <View style={styles.barRow}>
+              <ProgressBar value={value} color={color} height={5} style={styles.bar} />
+              <Text style={[styles.percent, { color }]}>{value.toFixed(0)}%</Text>
+            </View>
           </View>
         </View>
+        <TouchableOpacity style={styles.btn} onPress={handleRepor}>
+          <Text style={styles.btnText}>Repor</Text>
+        </TouchableOpacity>
       </View>
-      <TouchableOpacity style={styles.btn} onPress={handleRepor}>
-        <Text style={styles.btnText}>Repor</Text>
-      </TouchableOpacity>
-    </View>
+
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        buttons={alertButtons}
+        onClose={hideAlert}
+      />
+    </>
   );
 }
 
