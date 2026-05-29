@@ -37,6 +37,7 @@ interface HortaState {
   sintetizarComposto: (hortaId: string, compostoKey: CompoundKey, unidades: number) => void;
   reporGalao: (hortaId: string, atomo: AtomKey) => void;
   aplicarAtomNoSolo: (hortaId: string, atomo: SoloNutrienteKey, quantidade: number) => void;
+  injetarO2NoAr: (hortaId: string, quantidade: number) => void;
   resetSimulacao: () => void;
 }
 
@@ -244,6 +245,36 @@ export const useHortaStore = create<HortaState>()(
             hortas: state.hortas.map((h) =>
               h.id === hortaId
                 ? { ...h, estoqueAtomos: { ...h.estoqueAtomos, [atomo]: clamp(disponivel - real, 0, 100) }, solo: novoSolo }
+                : h
+            ),
+            logs: [...state.logs, log].slice(-MAX_LOGS),
+          };
+        });
+      },
+
+      injetarO2NoAr: (hortaId, quantidade) => {
+        set((state) => {
+          const horta = state.hortas.find((h) => h.id === hortaId);
+          if (!horta) return state;
+          const disponivel = horta.estoqueAtomos.O;
+          const real = Math.min(quantidade, disponivel);
+          if (real <= 0) return state;
+          const novoAr = {
+            ...horta.ar,
+            o2: clamp(horta.ar.o2 + real * 0.08, 0, 30),
+            qualidade: 0,
+          };
+          novoAr.qualidade = calcArQualidade(novoAr.o2, novoAr.co2, novoAr.umidade);
+          const log: LogEntry = {
+            id: generateId(), timestamp: new Date().toISOString(),
+            planetaId: horta.planetaId, hortaId,
+            tipo: 'aplicacao',
+            descricao: `${real.toFixed(0)}% de O injetado no ar (+${(real * 0.08).toFixed(2)}% O₂)`,
+          };
+          return {
+            hortas: state.hortas.map((h) =>
+              h.id === hortaId
+                ? { ...h, estoqueAtomos: { ...h.estoqueAtomos, O: clamp(disponivel - real, 0, 100) }, ar: novoAr }
                 : h
             ),
             logs: [...state.logs, log].slice(-MAX_LOGS),

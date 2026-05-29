@@ -10,7 +10,8 @@ const EFEITOS_POR_10: Record<CompoundKey, Partial<Record<AplicacaoAlvo, Efeito[]
       { campo: 'umidade', delta: 12 },
     ],
     ar: [
-      { campo: 'umidade', delta: 8 },
+      { campo: 'umidade', delta: 6 },
+      { campo: 'co2', delta: -0.05 }, // CO₂ + H₂O → H₂CO₃ (absorção de CO₂ pela água)
     ],
   },
   NH3: {
@@ -64,6 +65,8 @@ export function applyCompostoToHorta(
         novoAr.umidade = clamp(novoAr.umidade + totalDelta, 0, 100);
       } else if (campo === 'o2') {
         novoAr.o2 = clamp(novoAr.o2 + totalDelta, 0, 30);
+      } else if (campo === 'co2') {
+        novoAr.co2 = clamp(novoAr.co2 + totalDelta, 0, 5);
       }
     }
   });

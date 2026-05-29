@@ -9,6 +9,8 @@ import { SoloQualidadeCard } from '../../components/horta/SoloQualidadeCard';
 import { ArQualidadeCard } from '../../components/horta/ArQualidadeCard';
 import { NutrienteCard } from '../../components/horta/NutrienteCard';
 import { NutrirSoloSheet } from '../../components/layout/NutrirSoloSheet';
+import { AtmosferaSheet } from '../../components/layout/AtmosferaSheet';
+import { SoloControleSheet } from '../../components/layout/SoloControleSheet';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { useHortaStore } from '../../store/hortaStore';
 import { COLORS, ATOM_COLORS, NUTRIENT_COLORS } from '../../constants/colors';
@@ -120,8 +122,12 @@ export default function EstufaScreen() {
   const horta = useHortaStore((s) => s.getHortaAtual());
   const planeta = useHortaStore((s) => s.getPlanetaAtual());
   const aplicarAtomNoSolo = useHortaStore((s) => s.aplicarAtomNoSolo);
+  const aplicarComposto   = useHortaStore((s) => s.aplicarComposto);
+  const injetarO2NoAr     = useHortaStore((s) => s.injetarO2NoAr);
 
   const [sheetNutriente, setSheetNutriente] = useState<SoloNutrienteKey | null>(null);
+  const [atmosferaVisible, setAtmosferaVisible] = useState(false);
+  const [soloControleVisible, setSoloControleVisible] = useState(false);
   const [nutrirTudoVisible, setNutrirTudoVisible] = useState(false);
   const [qtdTudo, setQtdTudo] = useState(10);
   const [selecionados, setSelecionados] = useState<Set<SoloNutrienteKey>>(new Set());
@@ -182,8 +188,8 @@ export default function EstufaScreen() {
         <GravityIndicator gravidade={planeta.gravidade} planetaNome={planeta.nome} />
         <AlertaSection horta={horta} />
         <PlantVisualization planta={horta.planta} />
-        <SoloQualidadeCard solo={horta.solo} />
-        <ArQualidadeCard ar={horta.ar} />
+        <SoloQualidadeCard solo={horta.solo} onPress={() => setSoloControleVisible(true)} />
+        <ArQualidadeCard ar={horta.ar} onPress={() => setAtmosferaVisible(true)} />
 
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Nutrientes do Solo</Text>
@@ -227,6 +233,21 @@ export default function EstufaScreen() {
           <Text style={styles.reservatoriosArrow}>›</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <AtmosferaSheet
+        visible={atmosferaVisible}
+        horta={horta}
+        onAplicarH2OAr={(qty) => aplicarComposto(horta.id, 'H2O', 'ar', qty)}
+        onInjetarO2={(qty) => injetarO2NoAr(horta.id, qty)}
+        onClose={() => setAtmosferaVisible(false)}
+      />
+
+      <SoloControleSheet
+        visible={soloControleVisible}
+        horta={horta}
+        onAplicarComposto={(comp, alvo, qty) => aplicarComposto(horta.id, comp, alvo, qty)}
+        onClose={() => setSoloControleVisible(false)}
+      />
 
       <NutrirSoloSheet
         visible={sheetNutriente !== null}

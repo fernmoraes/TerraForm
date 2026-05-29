@@ -1,10 +1,9 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { StatusBadge } from '../ui/StatusBadge';
 import { COLORS } from '../../constants/colors';
 import type { Solo } from '../../types';
 
-interface Props { solo: Solo }
+interface Props { solo: Solo; onPress?: () => void; }
 
 function qualidadeColor(q: number): string {
   if (q < 35) return COLORS.critico;
@@ -12,10 +11,10 @@ function qualidadeColor(q: number): string {
   return COLORS.border;
 }
 
-export function SoloQualidadeCard({ solo }: Props) {
+export function SoloQualidadeCard({ solo, onPress }: Props) {
   const borderColor = qualidadeColor(solo.qualidade);
   return (
-    <View style={[styles.card, { borderColor }]}>
+    <TouchableOpacity style={[styles.card, { borderColor }]} onPress={onPress} activeOpacity={onPress ? 0.75 : 1}>
       <View style={styles.header}>
         <Text style={styles.title}>Solo</Text>
         <StatusBadge value={solo.qualidade} />
@@ -34,7 +33,8 @@ export function SoloQualidadeCard({ solo }: Props) {
           <Text style={styles.metricLabel}>Umidade</Text>
         </View>
       </View>
-    </View>
+      {onPress && <Text style={styles.hint}>Toque para controlar</Text>}
+    </TouchableOpacity>
   );
 }
 
@@ -52,4 +52,5 @@ const styles = StyleSheet.create({
   metricBox: { alignItems: 'center' },
   metricValue: { color: COLORS.ciano, fontSize: 18, fontWeight: 'bold' },
   metricLabel: { color: COLORS.textSecondary, fontSize: 11, marginTop: 2 },
+  hint: { color: COLORS.ciano, fontSize: 10, textAlign: 'right', marginTop: 6, opacity: 0.7 },
 });

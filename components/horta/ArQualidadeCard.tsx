@@ -1,10 +1,10 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { View } from 'react-native';
 import { StatusBadge } from '../ui/StatusBadge';
 import { COLORS } from '../../constants/colors';
 import type { Ar } from '../../types';
 
-interface Props { ar: Ar }
+interface Props { ar: Ar; onPress?: () => void; }
 
 function qualidadeColor(q: number): string {
   if (q < 35) return COLORS.critico;
@@ -12,10 +12,10 @@ function qualidadeColor(q: number): string {
   return COLORS.border;
 }
 
-export function ArQualidadeCard({ ar }: Props) {
+export function ArQualidadeCard({ ar, onPress }: Props) {
   const borderColor = qualidadeColor(ar.qualidade);
   return (
-    <View style={[styles.card, { borderColor }]}>
+    <TouchableOpacity style={[styles.card, { borderColor }]} onPress={onPress} activeOpacity={onPress ? 0.75 : 1}>
       <View style={styles.header}>
         <Text style={styles.title}>Atmosfera Interna</Text>
         <StatusBadge value={ar.qualidade} />
@@ -38,7 +38,8 @@ export function ArQualidadeCard({ ar }: Props) {
           <Text style={styles.metricLabel}>Umidade</Text>
         </View>
       </View>
-    </View>
+      {onPress && <Text style={styles.hint}>Toque para controlar</Text>}
+    </TouchableOpacity>
   );
 }
 
@@ -56,4 +57,5 @@ const styles = StyleSheet.create({
   metricBox: { alignItems: 'center' },
   metricValue: { color: COLORS.ciano, fontSize: 16, fontWeight: 'bold' },
   metricLabel: { color: COLORS.textSecondary, fontSize: 11, marginTop: 2 },
+  hint: { color: COLORS.ciano, fontSize: 10, textAlign: 'right', marginTop: 6, opacity: 0.7 },
 });
