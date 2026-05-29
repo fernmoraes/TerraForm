@@ -18,15 +18,20 @@ interface Props {
   showPlanetaHorta?: boolean;
   planetaNome?: string;
   hortaNome?: string;
+  onPress?: () => void;
 }
 
-export function LogEntryItem({ entry, showPlanetaHorta, planetaNome, hortaNome }: Props) {
+export function LogEntryItem({ entry, showPlanetaHorta, planetaNome, hortaNome, onPress }: Props) {
   const config = TIPO_CONFIG[entry.tipo] ?? TIPO_CONFIG.leitura;
   const isCritico = entry.nivel === 'critico';
   const isAtencao = entry.nivel === 'atencao';
 
   return (
-    <View style={[styles.item, isCritico && styles.itemCritico]}>
+    <TouchableOpacity
+      style={[styles.item, isCritico && styles.itemCritico]}
+      onPress={onPress}
+      activeOpacity={onPress ? 0.6 : 1}
+    >
       <View style={[styles.iconBadge, { backgroundColor: config.color + '22' }]}>
         <Text style={styles.emoji}>{config.emoji}</Text>
       </View>
@@ -51,7 +56,7 @@ export function LogEntryItem({ entry, showPlanetaHorta, planetaNome, hortaNome }
           )}
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 

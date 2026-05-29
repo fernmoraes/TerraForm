@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { router } from 'expo-router';
 import { GradientBackground } from '../../components/ui/GradientBackground';
 import { LogEntryItem } from '../../components/logs/LogEntryItem';
 import { useHortaStore } from '../../store/hortaStore';
@@ -15,6 +16,8 @@ export default function LogsScreen() {
   const hortas = useHortaStore((s) => s.hortas);
   const selectedPlanetaId = useHortaStore((s) => s.selectedPlanetaId);
   const selectedHortaId = useHortaStore((s) => s.selectedHortaId);
+  const selectPlaneta = useHortaStore((s) => s.selectPlaneta);
+  const selectHorta = useHortaStore((s) => s.selectHorta);
 
   const filteredLogs = useMemo((): LogEntry[] => {
     const sorted = [...logs].reverse();
@@ -27,6 +30,12 @@ export default function LogsScreen() {
     planetaNome: planetas.find((p) => p.id === entry.planetaId)?.nome,
     hortaNome: hortas.find((h) => h.id === entry.hortaId)?.nome,
   });
+
+  const handleLogPress = (entry: LogEntry) => {
+    selectPlaneta(entry.planetaId);
+    selectHorta(entry.hortaId);
+    router.push('/(tabs)/estufa');
+  };
 
   const FILTROS: { key: Filtro; label: string }[] = [
     { key: 'horta', label: 'Estufa' },
@@ -66,6 +75,7 @@ export default function LogsScreen() {
                 showPlanetaHorta={filtro !== 'horta'}
                 planetaNome={planetaNome}
                 hortaNome={hortaNome}
+                onPress={() => handleLogPress(item)}
               />
             );
           }}
