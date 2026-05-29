@@ -1,5 +1,4 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { GaugeCircular } from '../ui/GaugeCircular';
 import { COLORS, NUTRIENT_COLORS } from '../../constants/colors';
 import { THRESHOLDS } from '../../constants/thresholds';
@@ -12,9 +11,10 @@ const NOMES: Record<SoloNutrienteKey, string> = {
 interface Props {
   nutriente: SoloNutrienteKey;
   value: number;
+  onPress?: () => void;
 }
 
-export function NutrienteCard({ nutriente, value }: Props) {
+export function NutrienteCard({ nutriente, value, onPress }: Props) {
   const color =
     value < THRESHOLDS.nutrienteCritico
       ? COLORS.critico
@@ -23,11 +23,12 @@ export function NutrienteCard({ nutriente, value }: Props) {
       : NUTRIENT_COLORS[nutriente];
 
   return (
-    <View style={styles.card}>
+    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={onPress ? 0.7 : 1}>
       <GaugeCircular value={value} color={color} size={56} />
       <Text style={[styles.symbol, { color }]}>{nutriente}</Text>
       <Text style={styles.nome}>{NOMES[nutriente]}</Text>
-    </View>
+      {onPress && <Text style={styles.hint}>toque para nutrir</Text>}
+    </TouchableOpacity>
   );
 }
 
@@ -43,4 +44,5 @@ const styles = StyleSheet.create({
   },
   symbol: { fontSize: 14, fontWeight: 'bold', marginTop: 4 },
   nome: { color: COLORS.textSecondary, fontSize: 9, marginTop: 2 },
+  hint: { color: COLORS.textDim, fontSize: 8, marginTop: 3 },
 });
