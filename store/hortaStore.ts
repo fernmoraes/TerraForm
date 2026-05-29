@@ -85,22 +85,31 @@ function tickHorta(horta: Horta, planeta: Planeta): { horta: Horta; newLogs: Log
     });
   }
 
-  // Alertas críticos de nutrientes
+  // Alertas: dispara apenas ao cruzar uma fronteira de 10% para baixo
+  const cruzouFronteira = (prev: number, next: number) =>
+    Math.floor(prev / 10) > Math.floor(next / 10);
+
   (Object.keys(novoNutrientes) as SoloNutrienteKey[]).forEach((key) => {
-    if (novoNutrientes[key] < THRESHOLDS.nutrienteCritico) {
+    const prev = horta.solo.nutrientes[key];
+    const next = novoNutrientes[key];
+    if (cruzouFronteira(prev, next)) {
+      const marco = Math.floor(next / 10) * 10;
+      const nivel: NivelAlerta = next < THRESHOLDS.nutrienteCritico ? 'critico' : 'atencao';
       newLogs.push({
         id: generateId(), timestamp: now, planetaId: horta.planetaId, hortaId: horta.id,
-        tipo: 'alerta', nivel: 'critico',
-        descricao: `${NUTRIENTE_NOMES[key]} crítico: ${novoNutrientes[key].toFixed(0)}%`,
+        tipo: 'alerta', nivel,
+        descricao: `${NUTRIENTE_NOMES[key]} caiu para ${marco}% no solo`,
       });
     }
   });
 
-  if (novaUmidadeSolo < THRESHOLDS.umidadeSoloMin) {
+  if (cruzouFronteira(horta.solo.umidade, novaUmidadeSolo)) {
+    const marco = Math.floor(novaUmidadeSolo / 10) * 10;
+    const nivel: NivelAlerta = novaUmidadeSolo < THRESHOLDS.umidadeSoloMin ? 'critico' : 'atencao';
     newLogs.push({
       id: generateId(), timestamp: now, planetaId: horta.planetaId, hortaId: horta.id,
-      tipo: 'alerta', nivel: 'critico',
-      descricao: `Umidade do solo crítica: ${novaUmidadeSolo.toFixed(0)}%`,
+      tipo: 'alerta', nivel,
+      descricao: `Umidade do solo caiu para ${marco}%`,
     });
   }
 
