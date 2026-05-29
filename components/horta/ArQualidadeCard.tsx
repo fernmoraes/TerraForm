@@ -6,9 +6,16 @@ import type { Ar } from '../../types';
 
 interface Props { ar: Ar }
 
+function qualidadeColor(q: number): string {
+  if (q < 35) return COLORS.critico;
+  if (q < 65) return COLORS.atencao;
+  return COLORS.border;
+}
+
 export function ArQualidadeCard({ ar }: Props) {
+  const borderColor = qualidadeColor(ar.qualidade);
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { borderColor }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Atmosfera Interna</Text>
         <StatusBadge value={ar.qualidade} />

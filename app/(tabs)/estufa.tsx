@@ -12,7 +12,8 @@ import { NutrirSoloSheet } from '../../components/layout/NutrirSoloSheet';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { useHortaStore } from '../../store/hortaStore';
 import { COLORS, ATOM_COLORS, NUTRIENT_COLORS } from '../../constants/colors';
-import type { AtomKey, SoloNutrienteKey } from '../../types';
+import { THRESHOLDS } from '../../constants/thresholds';
+import type { Horta, AtomKey, SoloNutrienteKey, NivelAlerta } from '../../types';
 
 const SOLO_NUTRIENTES: SoloNutrienteKey[] = ['N', 'P', 'K', 'Ca', 'Mg', 'S'];
 const ATOMS: AtomKey[] = ['N', 'P', 'K', 'Ca', 'Mg', 'S', 'O', 'H', 'C'];
@@ -22,6 +23,98 @@ const NUTRIENTE_NOMES: Record<SoloNutrienteKey, string> = {
   N: 'Nitrogênio', P: 'Fósforo', K: 'Potássio',
   Ca: 'Cálcio', Mg: 'Magnésio', S: 'Enxofre',
 };
+
+// ── Seção de alertas ativos ───────────────────────────────────
+type Alerta = { texto: string; nivel: NivelAlerta };
+
+function buildAlertas(horta: Horta): Alerta[] {
+  const list: Alerta[] = [];
+
+  (Object.keys(horta.solo.nutrientes) as SoloNutrienteKey[]).forEach((k) => {
+    const v = horta.solo.nutrientes[k];
+    if (v < THRESHOLDS.nutrienteCritico)
+      list.push({ nivel: 'critico', texto: `${NUTRIENTE_NOMES[k]} crítico no solo — ${v.toFixed(0)}%` });
+    else if (v < THRESHOLDS.nutrienteAtencao)
+      list.push({ nivel: 'atencao', texto: `${NUTRIENTE_NOMES[k]} baixo no solo — ${v.toFixed(0)}%` });
+  });
+
+  const um = horta.solo.umidade;
+  if (um < THRESHOLDS.umidadeSoloMin)
+    list.push({ nivel: 'critico', texto: `Umidade do solo crítica — ${um.toFixed(0)}%` });
+  else if (um < THRESHOLDS.umidadeSoloAtencao)
+    list.push({ nivel: 'atencao', texto: `Umidade do solo baixa — ${um.toFixed(0)}%` });
+
+  const ph = horta.solo.ph;
+  if (ph < THRESHOLDS.phMinCritico || ph > THRESHOLDS.phMaxCritico)
+    list.push({ nivel: 'critico', texto: `pH do solo crítico — ${ph.toFixed(1)}` });
+  else if (ph < THRESHOLDS.phMinAtencao || ph > THRESHOLDS.phMaxAtencao)
+    list.push({ nivel: 'atencao', texto: `pH do solo fora do ideal — ${ph.toFixed(1)}` });
+
+  const o2 = horta.ar.o2;
+  if (o2 < THRESHOLDS.o2MinCritico)
+    list.push({ nivel: 'critico', texto: `O₂ crítico — ${o2.toFixed(1)}%` });
+  else if (o2 < THRESHOLDS.o2MinAtencao)
+    list.push({ nivel: 'atencao', texto: `O₂ baixo — ${o2.toFixed(1)}%` });
+
+  const co2 = horta.ar.co2;
+  if (co2 > THRESHOLDS.co2MaxCritico)
+    list.push({ nivel: 'critico', texto: `CO₂ perigoso — ${co2.toFixed(2)}%` });
+  else if (co2 > THRESHOLDS.co2MaxAtencao)
+    list.push({ nivel: 'atencao', texto: `CO₂ elevado — ${co2.toFixed(2)}%` });
+
+  (Object.keys(horta.estoqueAtomos) as AtomKey[]).forEach((k) => {
+    const v = horta.estoqueAtomos[k];
+    if (v < THRESHOLDS.atomoCritico)
+      list.push({ nivel: 'critico', texto: `Galão de ${k} crítico — ${v.toFixed(0)}%` });
+    else if (v < THRESHOLDS.atomoAtencao)
+      list.push({ nivel: 'atencao', texto: `Galão de ${k} baixo — ${v.toFixed(0)}%` });
+  });
+
+  return list.sort((a, b) => (a.nivel === 'critico' ? -1 : b.nivel === 'critico' ? 1 : 0));
+}
+
+function AlertaSection({ horta }: { horta: Horta }) {
+  const alertas = buildAlertas(horta);
+  if (alertas.length === 0) return null;
+
+  const numCriticos = alertas.filter((a) => a.nivel === 'critico').length;
+  const numAtencao  = alertas.filter((a) => a.nivel === 'atencao').length;
+  const dominante   = numCriticos > 0 ? COLORS.critico : COLORS.atencao;
+
+  return (
+    <View style={[aStyles.box, { borderColor: dominante, backgroundColor: dominante + '14' }]}>
+      <View style={aStyles.titleRow}>
+        <View style={[aStyles.squareBadge, { backgroundColor: dominante }]}>
+          <Text style={aStyles.squareText}>{numCriticos > 0 ? '!' : '▲'}</Text>
+        </View>
+        <Text style={[aStyles.title, { color: dominante }]}>
+          {numCriticos > 0 ? `${numCriticos} problema${numCriticos > 1 ? 's críticos' : ' crítico'}` : ''}
+          {numCriticos > 0 && numAtencao > 0 ? '  ·  ' : ''}
+          {numAtencao > 0 ? `${numAtencao} em atenção` : ''}
+        </Text>
+      </View>
+      {alertas.map((a, i) => (
+        <View key={i} style={aStyles.row}>
+          <View style={[aStyles.dot, { backgroundColor: a.nivel === 'critico' ? COLORS.critico : COLORS.atencao }]} />
+          <Text style={[aStyles.rowText, { color: a.nivel === 'critico' ? COLORS.critico : COLORS.atencao }]}>
+            {a.texto}
+          </Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+const aStyles = StyleSheet.create({
+  box: { borderRadius: 12, borderWidth: 1.5, padding: 12 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  squareBadge: { width: 22, height: 22, borderRadius: 4, justifyContent: 'center', alignItems: 'center' },
+  squareText: { color: '#000', fontSize: 13, fontWeight: 'bold' },
+  title: { fontSize: 13, fontWeight: 'bold' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 7, paddingVertical: 3 },
+  dot: { width: 6, height: 6, borderRadius: 3 },
+  rowText: { fontSize: 12, flex: 1, lineHeight: 17 },
+});
 
 export default function EstufaScreen() {
   const horta = useHortaStore((s) => s.getHortaAtual());
@@ -87,6 +180,7 @@ export default function EstufaScreen() {
     <GradientBackground>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <GravityIndicator gravidade={planeta.gravidade} planetaNome={planeta.nome} />
+        <AlertaSection horta={horta} />
         <PlantVisualization planta={horta.planta} />
         <SoloQualidadeCard solo={horta.solo} />
         <ArQualidadeCard ar={horta.ar} />

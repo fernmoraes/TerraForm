@@ -6,9 +6,16 @@ import type { Solo } from '../../types';
 
 interface Props { solo: Solo }
 
+function qualidadeColor(q: number): string {
+  if (q < 35) return COLORS.critico;
+  if (q < 65) return COLORS.atencao;
+  return COLORS.border;
+}
+
 export function SoloQualidadeCard({ solo }: Props) {
+  const borderColor = qualidadeColor(solo.qualidade);
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, { borderColor }]}>
       <View style={styles.header}>
         <Text style={styles.title}>Solo</Text>
         <StatusBadge value={solo.qualidade} />

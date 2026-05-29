@@ -22,8 +22,13 @@ export function NutrienteCard({ nutriente, value, onPress }: Props) {
       ? COLORS.atencao
       : NUTRIENT_COLORS[nutriente];
 
+  const borderColor =
+    value < THRESHOLDS.nutrienteCritico ? COLORS.critico
+    : value < THRESHOLDS.nutrienteAtencao ? COLORS.atencao
+    : COLORS.border;
+
   return (
-    <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={onPress ? 0.7 : 1}>
+    <TouchableOpacity style={[styles.card, { borderColor }]} onPress={onPress} activeOpacity={onPress ? 0.7 : 1}>
       <GaugeCircular value={value} color={color} size={56} />
       <Text style={[styles.symbol, { color }]}>{nutriente}</Text>
       <Text style={styles.nome}>{NOMES[nutriente]}</Text>
