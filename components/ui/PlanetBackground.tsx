@@ -3,12 +3,14 @@ import { Animated, Dimensions, Image, StyleSheet } from 'react-native';
 import { useHortaStore } from '../../store/hortaStore';
 import { PLANET_IMAGES } from '../../data/seed';
 
-const { width: W, height: H } = Dimensions.get('window');
-
-const SIZE = W * 0.74;
-const RESTING_TOP = H * 0.38 - SIZE / 2;
+const { width: W, height: H } = Dimensions.get('screen');
+const SIZE           = W * 0.74;
 const OPACITY_TARGET = 0.30;
-const EXIT_RISE = -80; // subtle upward drift while fading out
+const EXIT_RISE      = -80;
+
+// Module-level flag: the rise animation only plays once (first tab mount).
+// All other PlanetBackground instances skip it and appear at resting state immediately.
+let mountAnimationPlayed = false;
 
 export function PlanetBackground() {
   const planetaId = useHortaStore((s) => s.selectedPlanetaId);
@@ -16,16 +18,19 @@ export function PlanetBackground() {
   const [currentId, setCurrentId] = useState(planetaId);
   const [prevId, setPrevId]       = useState<string | null>(null);
 
-  // Incoming planet
-  const inTranslateY = useRef(new Animated.Value(H)).current;
-  const inOpacity    = useRef(new Animated.Value(0)).current;
-
-  // Outgoing planet — rises up and fades out
+  const inTranslateY  = useRef(new Animated.Value(H)).current;
+  const inOpacity     = useRef(new Animated.Value(0)).current;
   const outTranslateY = useRef(new Animated.Value(0)).current;
   const outOpacity    = useRef(new Animated.Value(0)).current;
 
-  // Initial planet rises from bottom on mount
+  // Mount: first instance plays the rise animation; all others go straight to resting state.
   useEffect(() => {
+    if (mountAnimationPlayed) {
+      inTranslateY.setValue(0);
+      inOpacity.setValue(OPACITY_TARGET);
+      return;
+    }
+    mountAnimationPlayed = true;
     Animated.parallel([
       Animated.spring(inTranslateY, {
         toValue: 0,
@@ -43,31 +48,20 @@ export function PlanetBackground() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Planet change: old drifts up + fades, new rises from bottom
   useEffect(() => {
     if (planetaId === currentId) return;
 
     setPrevId(currentId);
     setCurrentId(planetaId);
 
-    // Old planet: rises up and fades out simultaneously
     outTranslateY.setValue(0);
     outOpacity.setValue(OPACITY_TARGET);
     Animated.parallel([
-      Animated.timing(outTranslateY, {
-        toValue: EXIT_RISE,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(outOpacity, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start(({ finished }) => {
-      if (finished) setPrevId(null);
-    });
+      Animated.timing(outTranslateY, { toValue: EXIT_RISE, duration: 600, useNativeDriver: true }),
+      Animated.timing(outOpacity,    { toValue: 0,         duration: 600, useNativeDriver: true }),
+    ]).start(({ finished }) => { if (finished) setPrevId(null); });
 
-    // New planet: rises from bottom and fades in
     inTranslateY.setValue(H);
     inOpacity.setValue(0);
     Animated.parallel([
@@ -92,21 +86,19 @@ export function PlanetBackground() {
 
   return (
     <>
-      {/* Outgoing: rises up and fades out */}
       {prevImg && (
         <Animated.View
           pointerEvents="none"
-          style={[styles.wrapper, { opacity: outOpacity, transform: [{ translateY: outTranslateY }] }]}
+          style={[styles.overlay, { opacity: outOpacity, transform: [{ translateY: outTranslateY }] }]}
         >
           <Image source={prevImg} style={styles.planet} resizeMode="contain" />
         </Animated.View>
       )}
 
-      {/* Incoming: rises from bottom and fades in */}
       {currentImg && (
         <Animated.View
           pointerEvents="none"
-          style={[styles.wrapper, { opacity: inOpacity, transform: [{ translateY: inTranslateY }] }]}
+          style={[styles.overlay, { opacity: inOpacity, transform: [{ translateY: inTranslateY }] }]}
         >
           <Image source={currentImg} style={styles.planet} resizeMode="contain" />
         </Animated.View>
@@ -116,13 +108,16 @@ export function PlanetBackground() {
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
+  // Full-screen overlay: React Native centers the planet for us — no manual top/left math
+  overlay: {
     position: 'absolute',
-    top: RESTING_TOP,
-    left: (W - SIZE) / 2,
-    width: SIZE,
-    height: SIZE,
+    top: 0, left: 0, right: 0, bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
     zIndex: 0,
   },
-  planet: { width: '100%', height: '100%' },
+  planet: {
+    width: SIZE,
+    height: SIZE,
+  },
 });

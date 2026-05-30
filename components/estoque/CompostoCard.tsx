@@ -47,7 +47,7 @@ export function CompostoCard({ compoundKey, value, onAplicar }: Props) {
           <Text style={[styles.percent, { color }]}>{value.toFixed(0)}%</Text>
         </View>
         <ProgressBar value={value} color={color} height={6} style={styles.bar} />
-        <Text style={styles.funcao} numberOfLines={2}>{reacao.funcao}</Text>
+        <Text style={styles.funcao}>{reacao.funcao}</Text>
         <TouchableOpacity
           style={[styles.btn, { borderColor: color }]}
           onPress={() => setModalVisible(true)}

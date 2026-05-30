@@ -8,6 +8,13 @@ import type { Horta, CompoundKey } from '../../types';
 
 const QTDS = [10, 20, 30];
 
+function umidadeStatus(umidade: number): { label: string; color: string } {
+  if (umidade < 15)  return { label: 'Crítico', color: COLORS.critico };
+  if (umidade < 40)  return { label: 'Atenção', color: COLORS.atencao };
+  if (umidade <= 85) return { label: 'Ideal',   color: COLORS.verde };
+  return               { label: 'Atenção', color: COLORS.atencao }; // > 85%: encharcado
+}
+
 // Compostos que afetam o pH
 const PH_COMPOSTOS: {
   key: CompoundKey;
@@ -80,16 +87,26 @@ export function SoloControleSheet({ visible, horta, onAplicarComposto, onClose }
           <ScrollView showsVerticalScrollIndicator={false}>
 
             {/* ── Umidade ─────────────────────── */}
-            <View style={s.section}>
+            <View style={[s.section, { borderColor: umidadeStatus(solo.umidade).color + '60' }]}>
               <View style={s.sectionHeader}>
                 <Text style={s.sectionTitle}>Umidade do Solo</Text>
-                <Text style={[s.valorAtual, {
-                  color: solo.umidade < 15 ? COLORS.critico : solo.umidade < 25 ? COLORS.atencao : COLORS.ciano
-                }]}>
-                  {solo.umidade.toFixed(0)}%
-                </Text>
+                <View style={s.headerRight}>
+                  {(() => {
+                    const st = umidadeStatus(solo.umidade);
+                    return (
+                      <View style={[s.statusBadge, { borderColor: st.color + '80' }]}>
+                        <Text style={[s.statusBadgeText, { color: st.color }]}>{st.label}</Text>
+                      </View>
+                    );
+                  })()}
+                  <Text style={[s.valorAtual, {
+                    color: solo.umidade < 15 ? COLORS.critico : solo.umidade < 40 ? COLORS.atencao : COLORS.ciano
+                  }]}>
+                    {solo.umidade.toFixed(0)}%
+                  </Text>
+                </View>
               </View>
-              <Text style={s.descricao}>Irrigação com H₂O do estoque de compostos.  Ideal: 35 – 65%.</Text>
+              <Text style={s.descricao}>Irrigação com H₂O do estoque de compostos.  Ideal: 40 – 85%.</Text>
               <View style={s.stockRow}>
                 <Text style={s.stockLabel}>H₂O disponível</Text>
                 <ProgressBar value={h2o} color={COLORS.ciano} height={4} style={s.stockBar} />
@@ -226,6 +243,9 @@ const s = StyleSheet.create({
   },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   sectionTitle: { color: COLORS.text, fontSize: 15, fontWeight: 'bold' },
+  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  statusBadge: { borderWidth: 1, borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 },
+  statusBadgeText: { fontSize: 11, fontWeight: '600' },
   sectionSubTitle: { color: COLORS.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 8 },
   valorAtual: { fontSize: 22, fontWeight: 'bold' },
   nivelBadge: { borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 2 },
