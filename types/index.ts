@@ -80,4 +80,5 @@ export type EspecieData = {
   nomecientifico: string;
   cor: string;
   emoji: string;
+  image: number;
 };

@@ -1,28 +1,21 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Image, StyleSheet } from 'react-native';
 import { ProgressBar } from '../ui/ProgressBar';
 import { COLORS } from '../../constants/colors';
 import { PLANT_SPECIES_DATA, FASE_LABELS } from '../../data/plants';
 import { fasePorcentagem } from '../../utils/agriculture';
 import type { Planta } from '../../types';
 
-const FASE_EMOJIS: Record<string, string> = {
-  germinacao: '🌰', mudas: '🌱', vegetativo: '🌿', floracao: '🌸', colheita: '✅',
-};
-
 interface Props { planta: Planta }
 
 export function PlantVisualization({ planta }: Props) {
   const specieData = PLANT_SPECIES_DATA[planta.especie];
   const progresso = fasePorcentagem(planta);
-  const faseEmoji = FASE_EMOJIS[planta.fase] ?? '🌱';
   const isColheita = planta.fase === 'colheita';
 
   return (
     <View style={styles.container}>
-      <Text style={styles.bigEmoji}>
-        {isColheita ? specieData.emoji : faseEmoji}
-      </Text>
+      <Image source={specieData.image} style={styles.cropImage} resizeMode="contain" />
       <Text style={[styles.especie, { color: specieData.cor }]}>{specieData.nome}</Text>
       <Text style={styles.nomecientifico}>{specieData.nomecientifico}</Text>
       <View style={styles.faseRow}>
@@ -52,7 +45,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  bigEmoji: { fontSize: 56 },
+  cropImage: { width: 80, height: 80 },
   especie: { fontSize: 18, fontWeight: 'bold', marginTop: 8 },
   nomecientifico: { color: COLORS.textSecondary, fontSize: 12, fontStyle: 'italic', marginBottom: 10 },
   faseRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
