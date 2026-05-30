@@ -185,7 +185,7 @@ export default function EstufaScreen() {
   return (
     <GradientBackground>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <GravityIndicator gravidade={planeta.gravidade} planetaNome={planeta.nome} />
+        <GravityIndicator gravidade={planeta.gravidade} planetaNome={planeta.nome} planetaId={planeta.id} />
         <AlertaSection horta={horta} />
         <PlantVisualization planta={horta.planta} />
         <SoloQualidadeCard solo={horta.solo} onPress={() => setSoloControleVisible(true)} />
@@ -397,7 +397,7 @@ const styles = StyleSheet.create({
   sectionHint: { color: COLORS.textDim, fontSize: 11 },
   nutrientesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'space-between' },
   nutrirTudoBtn: {
-    backgroundColor: COLORS.highlight, borderRadius: 12, borderWidth: 1,
+    backgroundColor: COLORS.highlightGlass, borderRadius: 12, borderWidth: 1,
     borderColor: COLORS.ciano + '60', padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12,
   },
   nutrirTudoIcon: { fontSize: 24 },
@@ -405,7 +405,7 @@ const styles = StyleSheet.create({
   nutrirTudoSub: { color: COLORS.textSecondary, fontSize: 11, marginTop: 2 },
   reservatoriosRow: {
     flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center',
-    backgroundColor: COLORS.card, borderRadius: 12, padding: 14,
+    backgroundColor: COLORS.cardGlass, borderRadius: 12, padding: 14,
     borderWidth: 1, borderColor: COLORS.border,
   },
   reservatoriosArrow: { color: COLORS.textDim, fontSize: 22, marginLeft: 4 },

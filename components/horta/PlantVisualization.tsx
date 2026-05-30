@@ -38,12 +38,12 @@ export function PlantVisualization({ planta }: Props) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.cardGlass,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: COLORS.borderGlass,
   },
   cropImage: { width: 80, height: 80 },
   especie: { fontSize: 18, fontWeight: 'bold', marginTop: 8 },

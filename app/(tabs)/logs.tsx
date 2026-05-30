@@ -231,12 +231,12 @@ export default function LogsScreen() {
 const styles = StyleSheet.create({
   filterRow: {
     flexDirection: 'row', padding: 12, gap: 8,
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.cardGlass,
     borderBottomWidth: 1, borderBottomColor: COLORS.border,
   },
   filterBtn: {
     flex: 1, paddingVertical: 8, borderRadius: 8,
-    alignItems: 'center', backgroundColor: COLORS.highlight,
+    alignItems: 'center', backgroundColor: COLORS.highlightGlass,
   },
   filterBtnActive: {
     backgroundColor: COLORS.ciano + '28',
@@ -253,7 +253,7 @@ const styles = StyleSheet.create({
 
   // Card da estufa
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.cardGlass,
     borderRadius: 14,
     borderWidth: 1,
     overflow: 'hidden',

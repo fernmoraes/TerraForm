@@ -115,7 +115,7 @@ export function CompostoCard({ compoundKey, value, onAplicar }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.cardGlass,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,

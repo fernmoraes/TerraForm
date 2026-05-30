@@ -76,7 +76,7 @@ export function LogEntryItem({ entry, showPlanetaHorta, planetaNome, hortaNome, 
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.cardGlass,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: COLORS.border,

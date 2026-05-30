@@ -68,7 +68,7 @@ export function GallonCard({ atomKey, value, onRepor }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.cardGlass,
     borderRadius: 12,
     padding: 12,
     flexDirection: 'row',

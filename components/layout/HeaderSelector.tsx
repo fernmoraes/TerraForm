@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, FlatList, StyleSheet } from 'react-native';
+import { View, Text, Image, TouchableOpacity, Modal, FlatList, StyleSheet } from 'react-native';
 import { COLORS } from '../../constants/colors';
 import { useHortaStore } from '../../store/hortaStore';
+import { PLANET_IMAGES } from '../../data/seed';
 
 export function HeaderSelector() {
   const planetas = useHortaStore((s) => s.planetas);
@@ -22,7 +23,10 @@ export function HeaderSelector() {
     <View style={styles.container}>
       {/* Seletor de Planeta */}
       <TouchableOpacity style={[styles.selector, { borderColor: planeta?.cor ?? COLORS.border }]} onPress={() => setShowPlanetas(true)}>
-        <View style={[styles.dot, { backgroundColor: planeta?.cor ?? COLORS.border }]} />
+        {planeta && PLANET_IMAGES[planeta.id]
+          ? <Image source={PLANET_IMAGES[planeta.id]} style={styles.planetImgSmall} resizeMode="contain" />
+          : <View style={[styles.dot, { backgroundColor: planeta?.cor ?? COLORS.border }]} />
+        }
         <Text style={styles.selectorText} numberOfLines={1}>{planeta?.nome ?? '—'}</Text>
         <Text style={styles.chevron}>▾</Text>
       </TouchableOpacity>
@@ -48,7 +52,10 @@ export function HeaderSelector() {
                   style={[styles.dropdownItem, p.id === selectedPlanetaId && styles.dropdownItemActive]}
                   onPress={() => { selectPlaneta(p.id); setShowPlanetas(false); }}
                 >
-                  <View style={[styles.dot, { backgroundColor: p.cor }]} />
+                  {PLANET_IMAGES[p.id]
+                    ? <Image source={PLANET_IMAGES[p.id]} style={styles.planetImgDropdown} resizeMode="contain" />
+                    : <View style={[styles.dot, { backgroundColor: p.cor }]} />
+                  }
                   <View>
                     <Text style={styles.dropdownItemText}>{p.nome}</Text>
                     <Text style={styles.dropdownItemSub}>{p.gravidade.toFixed(2)} g</Text>
@@ -106,6 +113,8 @@ const styles = StyleSheet.create({
     maxWidth: 150,
   },
   dot: { width: 8, height: 8, borderRadius: 4 },
+  planetImgSmall: { width: 20, height: 20, borderRadius: 10 },
+  planetImgDropdown: { width: 36, height: 36, borderRadius: 18 },
   selectorText: { color: COLORS.text, fontSize: 13, fontWeight: '600', flex: 1 },
   chevron: { color: COLORS.textSecondary, fontSize: 10 },
   sep: { color: COLORS.textDim, fontSize: 16 },

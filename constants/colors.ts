@@ -6,6 +6,10 @@ export const COLORS = {
   highlight: '#1A3A6B',
   border: '#1E4080',
 
+  cardGlass: 'rgba(15, 32, 68, 0.45)',
+  highlightGlass: 'rgba(26, 58, 107, 0.50)',
+  borderGlass: 'rgba(255, 255, 255, 0.13)',
+
   ciano: '#00D4FF',
   verde: '#39FF14',
   roxo: '#7B2FBE',

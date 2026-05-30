@@ -39,7 +39,7 @@ export function NutrienteCard({ nutriente, value, onPress }: Props) {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: COLORS.card,
+    backgroundColor: COLORS.cardGlass,
     borderRadius: 12,
     padding: 10,
     alignItems: 'center',

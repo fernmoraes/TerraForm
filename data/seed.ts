@@ -9,6 +9,14 @@ export const PLANETAS: Planeta[] = [
   { id: 'terra',  nome: 'Terra',  gravidade: 1.00, cor: '#2E8B57' },
 ];
 
+export const PLANET_IMAGES: Record<string, number> = {
+  lua:    require('../assets/planets/lua.png'),
+  marte:  require('../assets/planets/marte.png'),
+  europa: require('../assets/planets/europa.png'),
+  tita:   require('../assets/planets/tita.png'),
+  terra:  require('../assets/planets/terra.png'),
+};
+
 function makeHorta(partial: Omit<Horta, 'solo' | 'ar'> & {
   solo: Omit<Horta['solo'], 'qualidade'>;
   ar: Omit<Horta['ar'], 'qualidade'>;
