@@ -1,19 +1,28 @@
-import React from 'react';
-import { View, Text, Image, StyleSheet } from 'react-native';
+import { TouchableOpacity, View, Text, Image, StyleSheet } from 'react-native';
 import { COLORS } from '../../constants/colors';
 import { PLANET_IMAGES } from '../../data/seed';
 
-interface Props { gravidade: number; planetaNome: string; planetaId: string }
+interface Props {
+  gravidade: number;
+  planetaNome: string;
+  planetaId: string;
+  onPress?: () => void;
+}
 
-export function GravityIndicator({ gravidade, planetaNome, planetaId }: Props) {
+export function GravityIndicator({ gravidade, planetaNome, planetaId, onPress }: Props) {
   const img = PLANET_IMAGES[planetaId];
   return (
-    <View style={styles.badge}>
+    <TouchableOpacity
+      style={styles.badge}
+      onPress={onPress}
+      activeOpacity={onPress ? 0.7 : 1}
+    >
       {img && <Image source={img} style={styles.planetImg} resizeMode="contain" />}
       <Text style={styles.text}>
         {planetaNome}  ·  {gravidade.toFixed(2)} g
       </Text>
-    </View>
+      {onPress && <Text style={styles.arrow}>ℹ</Text>}
+    </TouchableOpacity>
   );
 }
 
@@ -32,4 +41,5 @@ const styles = StyleSheet.create({
   },
   planetImg: { width: 28, height: 28, borderRadius: 14 },
   text: { color: COLORS.ciano, fontSize: 12, fontWeight: '600' },
+  arrow: { color: COLORS.textSecondary, fontSize: 13 },
 });

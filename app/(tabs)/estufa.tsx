@@ -11,6 +11,7 @@ import { NutrienteCard } from '../../components/horta/NutrienteCard';
 import { NutrirSoloSheet } from '../../components/layout/NutrirSoloSheet';
 import { AtmosferaSheet } from '../../components/layout/AtmosferaSheet';
 import { SoloControleSheet } from '../../components/layout/SoloControleSheet';
+import { PlanetaInfoSheet } from '../../components/layout/PlanetaInfoSheet';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { useHortaStore } from '../../store/hortaStore';
 import { COLORS, ATOM_COLORS, NUTRIENT_COLORS } from '../../constants/colors';
@@ -128,6 +129,7 @@ export default function EstufaScreen() {
   const [sheetNutriente, setSheetNutriente] = useState<SoloNutrienteKey | null>(null);
   const [atmosferaVisible, setAtmosferaVisible] = useState(false);
   const [soloControleVisible, setSoloControleVisible] = useState(false);
+  const [planetaInfoVisible, setPlanetaInfoVisible] = useState(false);
   const [nutrirTudoVisible, setNutrirTudoVisible] = useState(false);
   const [qtdTudo, setQtdTudo] = useState(10);
   const [selecionados, setSelecionados] = useState<Set<SoloNutrienteKey>>(new Set());
@@ -187,7 +189,12 @@ export default function EstufaScreen() {
   return (
     <GradientBackground>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <GravityIndicator gravidade={planeta.gravidade} planetaNome={planeta.nome} planetaId={planeta.id} />
+        <GravityIndicator
+          gravidade={planeta.gravidade}
+          planetaNome={planeta.nome}
+          planetaId={planeta.id}
+          onPress={() => setPlanetaInfoVisible(true)}
+        />
         <AlertaSection horta={horta} />
         <PlantVisualization planta={horta.planta} />
         <SoloQualidadeCard solo={horta.solo} onPress={() => setSoloControleVisible(true)} />
@@ -257,6 +264,12 @@ export default function EstufaScreen() {
         horta={horta}
         onAplicar={(atomo, qtd) => aplicarAtomNoSolo(horta.id, atomo, qtd)}
         onClose={() => setSheetNutriente(null)}
+      />
+
+      <PlanetaInfoSheet
+        visible={planetaInfoVisible}
+        planeta={planeta}
+        onClose={() => setPlanetaInfoVisible(false)}
       />
 
       {/* Modal Nutrir Tudo */}
