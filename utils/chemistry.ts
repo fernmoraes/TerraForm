@@ -34,17 +34,52 @@ const EFEITOS_POR_10: Record<CompoundKey, Partial<Record<AplicacaoAlvo, Efeito[]
   },
 };
 
+function currentFieldValue(horta: Horta, alvo: AplicacaoAlvo, campo: string): number {
+  if (alvo === 'solo') {
+    if (campo === 'ph') return horta.solo.ph;
+    if (campo === 'umidade') return horta.solo.umidade;
+    if (campo in horta.solo.nutrientes) return horta.solo.nutrientes[campo as keyof typeof horta.solo.nutrientes];
+  } else {
+    if (campo === 'umidade') return horta.ar.umidade;
+    if (campo === 'o2') return horta.ar.o2;
+    if (campo === 'co2') return horta.ar.co2;
+  }
+  return 0;
+}
+
+function fieldMax(alvo: AplicacaoAlvo, campo: string): number {
+  if (campo === 'ph') return 14;
+  if (campo === 'o2') return 30;
+  if (campo === 'co2') return 5;
+  return 100;
+}
+
+function fieldMin(_alvo: AplicacaoAlvo, _campo: string): number {
+  return 0;
+}
+
 export function applyCompostoToHorta(
   horta: Horta,
   composto: CompoundKey,
   alvo: AplicacaoAlvo,
-  quantidade: number // porcentagem a aplicar (10, 20, ...)
+  quantidade: number
 ): Horta {
   const estoqueAtual = horta.estoqueCompostos[composto];
   const realQtd = Math.min(quantidade, estoqueAtual);
   const multiplier = realQtd / 10;
-
   const efeitos = EFEITOS_POR_10[composto]?.[alvo] ?? [];
+
+  // Calcula mudança real antes de aplicar — se nada pode mudar, não consome do estoque
+  let totalMudancaReal = 0;
+  efeitos.forEach(({ campo, delta }) => {
+    const atual = currentFieldValue(horta, alvo, campo);
+    const max = fieldMax(alvo, campo);
+    const min = fieldMin(alvo, campo);
+    const depois = clamp(atual + delta * multiplier, min, max);
+    totalMudancaReal += Math.abs(depois - atual);
+  });
+
+  if (totalMudancaReal <= 0) return horta; // nada mudaria — não consome estoque
 
   let novoSolo = { ...horta.solo, nutrientes: { ...horta.solo.nutrientes } };
   let novoAr = { ...horta.ar };

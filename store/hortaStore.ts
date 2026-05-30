@@ -38,6 +38,7 @@ interface HortaState {
   reporGalao: (hortaId: string, atomo: AtomKey) => void;
   aplicarAtomNoSolo: (hortaId: string, atomo: SoloNutrienteKey, quantidade: number) => void;
   injetarO2NoAr: (hortaId: string, quantidade: number) => void;
+  clearLogsHorta: (hortaId: string) => void;
   resetSimulacao: () => void;
 }
 
@@ -280,6 +281,10 @@ export const useHortaStore = create<HortaState>()(
             logs: [...state.logs, log].slice(-MAX_LOGS),
           };
         });
+      },
+
+      clearLogsHorta: (hortaId) => {
+        set((state) => ({ logs: state.logs.filter((l) => l.hortaId !== hortaId) }));
       },
 
       resetSimulacao: () => {

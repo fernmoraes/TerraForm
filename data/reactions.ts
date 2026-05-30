@@ -5,7 +5,7 @@ export const REACTIONS: Reacao[] = [
     composto: 'H2O',
     nomeExibicao: 'Água',
     equacao: '2H₂ + O₂ → 2H₂O',
-    funcao: 'Irrigação do solo e controle de umidade do ar',
+    funcao: 'Irrigação e umidade. Use no solo quando umidade < 30% ou no ar quando umidade < 40%.',
     reagentes: [
       { tipo: 'atomo', chave: 'H', custoPor10: 8 },
       { tipo: 'atomo', chave: 'O', custoPor10: 4 },
@@ -16,7 +16,7 @@ export const REACTIONS: Reacao[] = [
     composto: 'NH3',
     nomeExibicao: 'Amônia',
     equacao: 'N₂ + 3H₂ → 2NH₃',
-    funcao: 'Fonte direta de nitrogênio assimilável pelas plantas',
+    funcao: 'Nitrogênio direto ao solo. Estimula crescimento foliar. Use quando N < 25%.',
     reagentes: [
       { tipo: 'atomo', chave: 'N', custoPor10: 4 },
       { tipo: 'atomo', chave: 'H', custoPor10: 12 },
@@ -27,7 +27,7 @@ export const REACTIONS: Reacao[] = [
     composto: 'CaCO3',
     nomeExibicao: 'Carbonato de Cálcio',
     equacao: 'Ca + CO₂ + ½O₂ → CaCO₃',
-    funcao: 'Correção de pH ácido e fonte de cálcio',
+    funcao: 'Eleva pH ácido e fornece cálcio às células. Use quando pH < 6.0 ou Ca < 25%.',
     reagentes: [
       { tipo: 'atomo', chave: 'Ca', custoPor10: 5 },
       { tipo: 'atomo', chave: 'C', custoPor10: 5 },
@@ -39,7 +39,7 @@ export const REACTIONS: Reacao[] = [
     composto: 'H2CO3',
     nomeExibicao: 'Ácido Carbônico',
     equacao: 'CO₂ + H₂O → H₂CO₃',
-    funcao: 'Acidificação do solo e regulação de pH alcalino',
+    funcao: 'Reduz pH alcalino. Use quando pH > 7.5. Atenção: consome H₂O do estoque.',
     reagentes: [
       { tipo: 'atomo', chave: 'C', custoPor10: 4 },
       { tipo: 'atomo', chave: 'O', custoPor10: 6 },
