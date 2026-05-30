@@ -18,8 +18,8 @@ export const COLORS = {
   vermelho: '#FF4757',
 
   text: '#FFFFFF',
-  textSecondary: '#8BA0C0',
-  textDim: '#4A6080',
+  textSecondary: '#A4B8D4',
+  textDim: '#6B87A8',
 
   atencao: '#FFD700',
   critico: '#FF4757',

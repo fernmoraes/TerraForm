@@ -7,9 +7,10 @@ const BG_IMAGE = require('../../assets/background.png');
 
 interface Props {
   children: React.ReactNode;
+  planetaId?: string;
 }
 
-export function GradientBackground({ children }: Props) {
+export function GradientBackground({ children, planetaId }: Props) {
   return (
     <ImageBackground source={BG_IMAGE} style={styles.fill} resizeMode="cover">
       <LinearGradient
@@ -18,7 +19,7 @@ export function GradientBackground({ children }: Props) {
         end={{ x: 0.7, y: 1 }}
         style={styles.fill}
       >
-        <PlanetBackground />
+        <PlanetBackground planetaId={planetaId} />
         {children}
       </LinearGradient>
     </ImageBackground>

@@ -78,7 +78,7 @@ export function AtmosferaSheet({ visible, horta, onAplicarH2OAr, onInjetarO2, on
             <TouchableOpacity onPress={onClose}><Text style={s.close}>✕</Text></TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
 
             {/* ── CO₂ ─────────────────────────── */}
             <View style={[s.section, { borderColor: nCO2.color + '60' }]}>
@@ -187,7 +187,7 @@ const s = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: '#000000BB', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: COLORS.card, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    padding: 20, paddingBottom: 36, maxHeight: '90%',
+    padding: 20, paddingBottom: 36, maxHeight: '92%', flex: 1,
   },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   title: { color: COLORS.text, fontSize: 18, fontWeight: 'bold' },

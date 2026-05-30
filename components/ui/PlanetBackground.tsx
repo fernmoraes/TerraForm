@@ -12,8 +12,11 @@ const EXIT_RISE      = -80;
 // All other PlanetBackground instances skip it and appear at resting state immediately.
 let mountAnimationPlayed = false;
 
-export function PlanetBackground() {
-  const planetaId = useHortaStore((s) => s.selectedPlanetaId);
+interface Props { planetaId?: string; }
+
+export function PlanetBackground({ planetaId: overrideId }: Props = {}) {
+  const storeId = useHortaStore((s) => s.selectedPlanetaId);
+  const planetaId = overrideId ?? storeId;
 
   const [currentId, setCurrentId] = useState(planetaId);
   const [prevId, setPrevId]       = useState<string | null>(null);

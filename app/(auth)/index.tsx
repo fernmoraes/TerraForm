@@ -94,6 +94,15 @@ export default function Onboarding() {
 
       {isReview && isLast && (
         <TouchableOpacity
+          style={styles.tutorialBtn}
+          onPress={() => router.push('/(auth)/tutorial')}
+        >
+          <Text style={styles.tutorialBtnText}>Tutorial Prático</Text>
+        </TouchableOpacity>
+      )}
+
+      {isReview && isLast && (
+        <TouchableOpacity
           style={styles.resetBtn}
           onPress={() =>
             showAlert(
@@ -141,6 +150,15 @@ const styles = StyleSheet.create({
   dotActive: { backgroundColor: COLORS.ciano, width: 20 },
   btn: { backgroundColor: COLORS.ciano, borderRadius: 14, paddingVertical: 16, alignItems: 'center' },
   btnText: { color: '#000', fontWeight: 'bold', fontSize: 17 },
+  tutorialBtn: {
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: COLORS.ciano + '70',
+    borderRadius: 14,
+    paddingVertical: 13,
+    alignItems: 'center',
+  },
+  tutorialBtnText: { color: COLORS.ciano, fontSize: 15, fontWeight: '600' },
   resetBtn: {
     marginTop: 12,
     borderWidth: 1,

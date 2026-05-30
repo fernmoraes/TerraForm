@@ -84,7 +84,7 @@ export function SoloControleSheet({ visible, horta, onAplicarComposto, onClose }
             <TouchableOpacity onPress={onClose}><Text style={s.close}>✕</Text></TouchableOpacity>
           </View>
 
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
 
             {/* ── Umidade ─────────────────────── */}
             <View style={[s.section, { borderColor: umidadeStatus(solo.umidade).color + '60' }]}>
@@ -232,7 +232,7 @@ const s = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: '#000000BB', justifyContent: 'flex-end' },
   sheet: {
     backgroundColor: COLORS.card, borderTopLeftRadius: 20, borderTopRightRadius: 20,
-    padding: 20, paddingBottom: 36, maxHeight: '90%',
+    padding: 20, paddingBottom: 36, maxHeight: '92%', flex: 1,
   },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   title: { color: COLORS.text, fontSize: 18, fontWeight: 'bold' },

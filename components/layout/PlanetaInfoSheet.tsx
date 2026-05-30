@@ -149,13 +149,13 @@ export function PlanetaInfoSheet({ visible, planeta, onClose }: Props) {
                         <Text style={[s.simboloText, { color: r.color }]}>{r.simbolo}</Text>
                       </View>
                     </View>
-                    <Text style={[s.tableCell, s.colBase, s.dimText]}>
+                    <Text style={[s.tableCell, s.colBase]}>
                       {sinal}{r.base.toFixed(3)}%
                     </Text>
                     <Text style={[s.tableCell, s.colAtual, { color: r.color }]}>
                       {sinal}{atual.toFixed(3)}%
                     </Text>
-                    <Text style={[s.tableCell, s.colMin, s.dimText]}>
+                    <Text style={[s.tableCell, s.colMin]}>
                       {sinal}{porMin.toFixed(2)}%
                     </Text>
                   </View>
@@ -244,9 +244,9 @@ const s = StyleSheet.create({
   tableHeaderText: { color: COLORS.textSecondary, fontSize: 10, fontWeight: '700' },
   tableCell: { fontSize: 12 },
   colRecurso: { width: 60 },
-  colBase: { flex: 1, color: COLORS.textDim, textAlign: 'center' },
+  colBase: { flex: 1, color: COLORS.textSecondary, textAlign: 'center' },
   colAtual: { flex: 1, fontWeight: '700', textAlign: 'center' },
-  colMin: { flex: 1, color: COLORS.textDim, textAlign: 'right' },
+  colMin: { flex: 1, color: COLORS.textSecondary, textAlign: 'right' },
   recursoCell: { flexDirection: 'row', alignItems: 'center' },
   simboloBadge: {
     borderWidth: 1, borderRadius: 6,
