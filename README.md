@@ -19,22 +19,25 @@ Cultivar alimentos no espaço é extremamente complexo:
 
 ## A Solução
 
-TerraForm centraliza o controle operacional de estufas hermeticamente isoladas instaladas em diferentes planetas e luas do sistema solar. O usuário assume o papel de um astronauta-agricultor que monitora e gerencia remotamente cada estufa a partir de um único aplicativo mobile.
+TerraForm centraliza o controle operacional de estufas hermeticamente isoladas instaladas em diferentes planetas e luas do sistema solar. O usuário assume o papel de um operador agrícola que monitora e gerencia cada estufa a partir de um único aplicativo mobile.
 
 **Não é um jogo.** TerraForm é uma ferramenta operacional — pense em um painel SCADA — com interface científica séria.
 
 ---
 
-## Funcionalidades Principais
+## Funcionalidades
 
-- **Dashboard da Estufa** — estado em tempo real: solo, ar, nutrientes, fase de crescimento das plantas
-- **Gestão de Estoque** — 9 elementos brutos em galões (N, P, K, Ca, Mg, S, O, H, C) + 4 compostos sintetizados
-- **Síntese Química** — produzir H₂O, NH₃, CaCO₃ e H₂CO₃ a partir dos elementos brutos com equações balanceadas
-- **Aplicação de Compostos** — irrigar o solo, corrigir pH, adicionar nutrientes e controlar a atmosfera interna
-- **Logs Completos** — histórico cronológico por horta, por planeta ou global
-- **Alertas em Tempo Real** — notificações push quando nutrientes ou compostos atingem nível crítico
-- **5 Planetas** — Lua, Marte, Europa, Titã e Terra (referência), com gravidade influenciando o cultivo
-- **Tutorial de Onboarding** — 5 telas de treinamento exibidas na primeira abertura
+- **Dashboard da Estufa** — estado em tempo real: solo, ar, atmosfera, nutrientes, fase de crescimento
+- **Alertas visuais** — seção de alertas ativos no topo da estufa, com classificação crítico / atenção
+- **Nutrir Tudo** — modal de aplicação em lote de nutrientes ao solo (seleção individual + validação de estoque)
+- **Controle do Solo** — modal com irrigação por H₂O e correção de pH (CaCO₃, NH₃, H₂CO₃)
+- **Controle da Atmosfera** — modal com absorção de CO₂, injeção de O₂ e vaporização de umidade
+- **Gestão de Estoque** — 9 elementos brutos em galões + 4 compostos sintetizados
+- **Síntese Química** — produzir H₂O, NH₃, CaCO₃ e H₂CO₃ com equações balanceadas e stepper
+- **Logs Completos** — histórico agrupado por estufa, com filtros por horta / planeta / global e expand/collapse
+- **Simulação em tempo real** — consumo automático de nutrientes a cada 15 s (foreground)
+- **5 Planetas** — Lua, Marte, Europa, Titã e Terra, com gravidade influenciando as taxas de consumo
+- **Tutorial de Onboarding** — 5 slides na primeira abertura; modo revisão + reset via botão "?" no header
 
 ---
 
@@ -44,43 +47,38 @@ TerraForm centraliza o controle operacional de estufas hermeticamente isoladas i
 |---|---|
 | Framework | React Native + Expo ~56 |
 | Linguagem | TypeScript (strict) |
-| Navegação | expo-router (file-based) |
+| Navegação | expo-router v4 (file-based) |
 | Estado global | Zustand + `persist` middleware |
 | Persistência | AsyncStorage (local, sem backend) |
-| Visualizações | react-native-svg (gauges circulares) |
+| Gauges SVG | react-native-svg |
 | Gradientes | expo-linear-gradient |
-| Notificações | expo-notifications |
-| Feedback tátil | expo-haptics |
+| Ícones | @expo/vector-icons (Ionicons) |
+| Notificações push | expo-notifications (pendente) |
+| Feedback tátil | expo-haptics (pendente) |
 
 ---
 
-## Como Rodar o Projeto
+## Como Rodar
 
 ### Pré-requisitos
 
 - Node.js 18+
-- Expo CLI: `npm install -g expo-cli`
 - Expo Go instalado no device (iOS ou Android)
 
 ### Passos
 
 ```bash
-# 1. Clone o repositório
-git clone <url-do-repositorio>
+# 1. Instale as dependências
 cd TerraForm
-
-# 2. Instale as dependências
 npm install
 
-# 3. Inicie o servidor de desenvolvimento
+# 2. Inicie o servidor de desenvolvimento
 npx expo start
 
-# 4. Escaneie o QR code com o Expo Go no seu dispositivo
+# 3. Escaneie o QR code com o Expo Go no dispositivo
 ```
 
-> O app é projetado para rodar no **Expo Go** sem necessidade de build nativo (`expo prebuild`).
-
-> Notificações push funcionam no Expo Go em **dispositivos Android físicos**. Em simuladores iOS, apenas alertas in-app são exibidos.
+> O app roda no **Expo Go** sem necessidade de `expo prebuild`.
 
 ---
 
@@ -88,26 +86,59 @@ npx expo start
 
 ```
 TerraForm/
-├── app/                  # Telas (expo-router)
-│   ├── (tabs)/           # 4 abas principais
-│   │   ├── estufa.tsx    # Dashboard da estufa
-│   │   ├── estoque.tsx   # Galões e compostos
-│   │   ├── sintese.tsx   # Síntese química
-│   │   └── logs.tsx      # Histórico de eventos
-│   └── onboarding/       # Tutorial de primeira abertura
-├── components/           # Componentes reutilizáveis
-│   ├── ui/               # GaugeCircular, ProgressBar, StatusBadge...
-│   ├── horta/            # PlantVisualization, NutrienteCard...
-│   ├── estoque/          # GallonCard, CompostoCard
-│   ├── sintese/          # ReacaoCard
-│   ├── logs/             # LogEntryItem
-│   └── layout/           # HeaderSelector, AplicarCompostoSheet
-├── store/                # Estado global Zustand
-├── data/                 # Dados estáticos (seed, reações, espécies)
-├── types/                # Tipos TypeScript
-├── constants/            # Cores, thresholds, configurações de simulação
-├── hooks/                # useSimulation, useAlertCheck
-└── utils/                # chemistry, agriculture, gravity, formatters
+├── app/
+│   ├── _layout.tsx           # Root layout — instancia useSimulation()
+│   ├── index.tsx             # Redirect: aguarda hydration → (auth) ou (tabs)
+│   ├── (auth)/
+│   │   └── index.tsx         # Tutorial 5 slides (primeiro-uso + revisão)
+│   └── (tabs)/
+│       ├── _layout.tsx       # Tab bar + HeaderSelector + botão "?"
+│       ├── estufa.tsx        # Dashboard da estufa
+│       ├── estoque.tsx       # Galões e compostos
+│       ├── sintese.tsx       # Síntese química
+│       └── logs.tsx          # Histórico de eventos
+│
+├── components/
+│   ├── ui/                   # GaugeCircular, ProgressBar, StatusBadge,
+│   │                         #   GradientBackground, NivelIndicator, CustomAlert
+│   ├── horta/                # GravityIndicator, PlantVisualization,
+│   │                         #   NutrienteCard, SoloQualidadeCard, ArQualidadeCard
+│   ├── estoque/              # GallonCard, CompostoCard
+│   ├── sintese/              # ReacaoCard
+│   ├── logs/                 # LogEntryItem
+│   └── layout/               # HeaderSelector, NutrirSoloSheet,
+│                             #   AtmosferaSheet, SoloControleSheet
+│
+├── store/
+│   ├── hortaStore.ts         # Estado principal — hortas, logs, simulação
+│   └── appStore.ts           # Tutorial completed / reset
+│
+├── data/
+│   ├── seed.ts               # 5 planetas + 8 hortas + PLANET_IMAGES
+│   ├── reactions.ts          # 4 reações + REACTION_MAP
+│   └── plants.ts             # 6 espécies + FASE_LABELS + FASES_ORDEM
+│
+├── types/
+│   └── index.ts              # Todos os tipos TypeScript
+│
+├── constants/
+│   ├── colors.ts             # COLORS, ATOM_COLORS, COMPOUND_COLORS, NUTRIENT_COLORS
+│   ├── thresholds.ts         # Limites de atenção e crítico
+│   └── simulation.ts        # TICK_INTERVAL_MS, taxas de consumo, FASE_DURACAO, MAX_LOGS
+│
+├── hooks/
+│   ├── useSimulation.ts      # setInterval 15s (só quando AppState === 'active')
+│   └── useCustomAlert.ts     # Hook para CustomAlert nos modais
+│
+├── utils/
+│   ├── chemistry.ts          # applyCompostoToHorta, synthesizeComposto, calcMaxUnidades
+│   ├── agriculture.ts        # calcSoloQualidade, calcArQualidade, advancePlant, fasePorcentagem
+│   ├── gravity.ts            # calcGravityFactor
+│   └── formatters.ts         # clamp, generateId, formatTimestampRelativo
+│
+└── assets/
+    ├── planets/              # lua.png, marte.png, europa.png, tita.png, terra.png
+    └── crops/                # alface.png, batata.png, tomate.png, trigo.png, cenoura.png, soja.png
 ```
 
 ---
@@ -115,27 +146,23 @@ TerraForm/
 ## Premissas Científicas
 
 - As estufas são **hermeticamente isoladas** — o solo nativo do planeta não afeta o cultivo
-- A **gravidade** é a única variável planetária real que influencia o sistema (evaporação, distribuição de fluidos, desenvolvimento das raízes)
+- A **gravidade** é a única variável planetária que influencia o sistema
+  - `gravityFactor = 0.7 + gravidade × 0.3`
+  - Consumo efetivo de recursos = taxa base × gravityFactor
 - Cada horta é **completamente independente** — recursos de uma estufa não afetam outra
-- As equações químicas de síntese são **reais e balanceadas** (H₂O, NH₃, CaCO₃, H₂CO₃)
+- As equações químicas de síntese são **reais e balanceadas**
 
 ---
 
-## Planetas Disponíveis
+## Planetas
 
-| Planeta | Gravidade | Influência |
-|---|---|---|
-| Europa | 0.13 g | Consumo ~74% da Terra |
-| Titã | 0.14 g | Consumo ~74% da Terra |
-| Lua | 0.17 g | Consumo ~75% da Terra |
-| Marte | 0.38 g | Consumo ~81% da Terra |
-| Terra | 1.00 g | Referência (100%) |
-
----
-
-## Screenshots / Mockups
-
-> *Em desenvolvimento — adicionar após Fase 10 (Polish Visual).*
+| Planeta | g | Fator gravidade | Consumo relativo |
+|---|---|---|---|
+| Europa | 0.13 g | 0.739 | 73.9% da Terra |
+| Titã | 0.14 g | 0.742 | 74.2% da Terra |
+| Lua | 0.17 g | 0.751 | 75.1% da Terra |
+| Marte | 0.38 g | 0.814 | 81.4% da Terra |
+| Terra | 1.00 g | 1.000 | referência |
 
 ---
 
