@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { GradientBackground } from '../../components/ui/GradientBackground';
+import { CustomAlert } from '../../components/ui/CustomAlert';
+import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { useAppStore } from '../../store/appStore';
 import { useHortaStore } from '../../store/hortaStore';
 import { COLORS } from '../../constants/colors';
@@ -39,6 +41,7 @@ export default function Onboarding() {
   const completeTutorial = useAppStore((s) => s.completeTutorial);
   const tutorialCompleted = useAppStore((s) => s.tutorialCompleted);
   const resetSimulacao = useHortaStore((s) => s.resetSimulacao);
+  const { alertVisible, alertTitle, alertMessage, alertButtons, showAlert, hideAlert } = useCustomAlert();
   const isReview = tutorialCompleted;
   const isLast = page === SLIDES.length - 1;
   const slide = SLIDES[page];
@@ -55,7 +58,8 @@ export default function Onboarding() {
   };
 
   return (
-    <GradientBackground style={styles.container}>
+    <GradientBackground>
+      <View style={styles.container}>
       <View style={styles.skipRow}>
         {isReview ? (
           <TouchableOpacity onPress={handleClose}>
@@ -92,13 +96,13 @@ export default function Onboarding() {
         <TouchableOpacity
           style={styles.resetBtn}
           onPress={() =>
-            Alert.alert(
+            showAlert(
               'Reiniciar Simulação',
               'Todas as hortas voltarão ao estado inicial e os logs serão apagados. Confirmar?',
               [
-                { text: 'Cancelar', style: 'cancel' },
+                { label: 'Cancelar', onPress: () => {}, style: 'cancel' },
                 {
-                  text: 'Reiniciar',
+                  label: 'Reiniciar',
                   style: 'destructive',
                   onPress: () => {
                     resetSimulacao();
@@ -112,6 +116,14 @@ export default function Onboarding() {
           <Text style={styles.resetText}>🔄 Reiniciar Simulação</Text>
         </TouchableOpacity>
       )}
+      <CustomAlert
+        visible={alertVisible}
+        title={alertTitle}
+        message={alertMessage}
+        buttons={alertButtons}
+        onClose={hideAlert}
+      />
+      </View>
     </GradientBackground>
   );
 }

@@ -12,8 +12,10 @@ export default function SinteseScreen() {
 
   if (!horta) {
     return (
-      <GradientBackground style={styles.center}>
-        <Text style={styles.emptyText}>Nenhuma estufa selecionada</Text>
+      <GradientBackground>
+        <View style={styles.center}>
+          <Text style={styles.emptyText}>Nenhuma estufa selecionada</Text>
+        </View>
       </GradientBackground>
     );
   }
