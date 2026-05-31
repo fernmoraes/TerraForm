@@ -101,6 +101,8 @@ export default function LogsScreen() {
   const selectPlaneta     = useHortaStore((s) => s.selectPlaneta);
   const selectHorta       = useHortaStore((s) => s.selectHorta);
   const clearLogsHorta    = useHortaStore((s) => s.clearLogsHorta);
+  const clearLogsPlaneta  = useHortaStore((s) => s.clearLogsPlaneta);
+  const clearAllLogs      = useHortaStore((s) => s.clearAllLogs);
   const { alertVisible, alertTitle, alertMessage, alertButtons, showAlert, hideAlert } = useCustomAlert();
 
   const groups = useMemo((): Group[] => {
@@ -164,6 +166,30 @@ export default function LogsScreen() {
     );
   };
 
+  const handleClearAll = () => {
+    const isPlaneta = filtro === 'planeta';
+    const planetaNome = planetas.find((p) => p.id === selectedPlanetaId)?.nome ?? '';
+    const titulo = isPlaneta ? `Limpar logs de ${planetaNome}` : 'Limpar todos os logs';
+    const mensagem = isPlaneta
+      ? `Remover todos os registros de todas as estufas em ${planetaNome}?`
+      : 'Remover todos os registros de todas as estufas?';
+    showAlert(titulo, mensagem, [
+      { label: 'Cancelar', onPress: () => {}, style: 'cancel' },
+      {
+        label: 'Limpar tudo',
+        style: 'destructive',
+        onPress: () => {
+          if (isPlaneta) clearLogsPlaneta(selectedPlanetaId);
+          else clearAllLogs();
+        },
+      },
+    ]);
+  };
+
+  const totalLogs = filtro === 'planeta'
+    ? logs.filter((l) => l.planetaId === selectedPlanetaId).length
+    : logs.length;
+
   return (
     <GradientBackground>
       {/* Filtros */}
@@ -191,6 +217,13 @@ export default function LogsScreen() {
           data={groups}
           keyExtractor={(g) => g.hortaId}
           contentContainerStyle={styles.list}
+          ListFooterComponent={
+            filtro !== 'horta' && totalLogs > 0 ? (
+              <TouchableOpacity style={styles.clearAllBtn} onPress={handleClearAll}>
+                <Text style={styles.clearAllText}>🗑 Limpar todos os logs</Text>
+              </TouchableOpacity>
+            ) : null
+          }
           renderItem={({ item: g }) => {
             const isExpanded  = expandedId === g.hortaId;
             const hasCritico  = g.criticals > 0;
@@ -448,6 +481,14 @@ const styles = StyleSheet.create({
     color: COLORS.textDim, fontSize: 11, textAlign: 'center',
     paddingVertical: 8,
   },
+
+  clearAllBtn: {
+    marginTop: 8, marginHorizontal: 4, marginBottom: 8,
+    borderWidth: 1, borderColor: COLORS.critico + '50',
+    borderRadius: 12, paddingVertical: 14, alignItems: 'center',
+    backgroundColor: COLORS.critico + '0A',
+  },
+  clearAllText: { color: COLORS.critico, fontSize: 14, fontWeight: '600' },
 
   actions: {
     flexDirection: 'row', gap: 8, marginTop: 12,

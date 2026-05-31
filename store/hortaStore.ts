@@ -39,6 +39,8 @@ interface HortaState {
   aplicarAtomNoSolo: (hortaId: string, atomo: SoloNutrienteKey, quantidade: number) => void;
   injetarO2NoAr: (hortaId: string, quantidade: number) => void;
   clearLogsHorta: (hortaId: string) => void;
+  clearLogsPlaneta: (planetaId: string) => void;
+  clearAllLogs: () => void;
   resetSimulacao: () => void;
 }
 
@@ -87,16 +89,21 @@ function tickHorta(horta: Horta, planeta: Planeta): { horta: Horta; newLogs: Log
     });
   }
 
-  // Alertas: dispara apenas ao cruzar uma fronteira de 10% para baixo
-  const cruzouFronteira = (prev: number, next: number) =>
-    Math.floor(prev / 10) > Math.floor(next / 10);
+  // Alertas de nutrientes: dispara apenas ao cruzar 30%, 20%, 10% ou 0%
+  const MARCOS_NUTRIENTE = [30, 20, 10, 0];
+  const cruzouMarcoNutriente = (prev: number, next: number): number | null => {
+    for (const m of MARCOS_NUTRIENTE) {
+      if (prev > m && next <= m) return m;
+    }
+    return null;
+  };
 
   (Object.keys(novoNutrientes) as SoloNutrienteKey[]).forEach((key) => {
     const prev = horta.solo.nutrientes[key];
     const next = novoNutrientes[key];
-    if (cruzouFronteira(prev, next)) {
-      const marco = Math.floor(next / 10) * 10;
-      const nivel: NivelAlerta = next < THRESHOLDS.nutrienteCritico ? 'critico' : 'atencao';
+    const marco = cruzouMarcoNutriente(prev, next);
+    if (marco !== null) {
+      const nivel: NivelAlerta = marco <= 10 ? 'critico' : 'atencao';
       newLogs.push({
         id: generateId(), timestamp: now, planetaId: horta.planetaId, hortaId: horta.id,
         tipo: 'alerta', nivel,
@@ -105,13 +112,13 @@ function tickHorta(horta: Horta, planeta: Planeta): { horta: Horta; newLogs: Log
     }
   });
 
-  if (cruzouFronteira(horta.solo.umidade, novaUmidadeSolo)) {
-    const marco = Math.floor(novaUmidadeSolo / 10) * 10;
-    const nivel: NivelAlerta = novaUmidadeSolo < THRESHOLDS.umidadeSoloMin ? 'critico' : 'atencao';
+  const marcoUmidade = cruzouMarcoNutriente(horta.solo.umidade, novaUmidadeSolo);
+  if (marcoUmidade !== null) {
+    const nivel: NivelAlerta = marcoUmidade <= 10 ? 'critico' : 'atencao';
     newLogs.push({
       id: generateId(), timestamp: now, planetaId: horta.planetaId, hortaId: horta.id,
       tipo: 'alerta', nivel,
-      descricao: `Umidade do solo caiu para ${marco}%`,
+      descricao: `Umidade do solo caiu para ${marcoUmidade}%`,
     });
   }
 
@@ -285,6 +292,14 @@ export const useHortaStore = create<HortaState>()(
 
       clearLogsHorta: (hortaId) => {
         set((state) => ({ logs: state.logs.filter((l) => l.hortaId !== hortaId) }));
+      },
+
+      clearLogsPlaneta: (planetaId) => {
+        set((state) => ({ logs: state.logs.filter((l) => l.planetaId !== planetaId) }));
+      },
+
+      clearAllLogs: () => {
+        set({ logs: [] });
       },
 
       resetSimulacao: () => {
