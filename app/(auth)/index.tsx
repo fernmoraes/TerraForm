@@ -50,8 +50,11 @@ export default function Onboarding() {
 
   const handleNext = () => {
     if (isLast) {
-      if (!isReview) completeTutorial();
-      isReview ? router.back() : router.replace('/(tabs)/estufa');
+      if (isReview) {
+        router.back();
+      } else {
+        router.replace('/(auth)/tutorial');
+      }
     } else {
       setPage((p) => p + 1);
     }
@@ -88,7 +91,7 @@ export default function Onboarding() {
 
       <TouchableOpacity style={styles.btn} onPress={handleNext}>
         <Text style={styles.btnText}>
-          {isLast ? (isReview ? 'Fechar Tutorial' : 'Iniciar Missão') : 'Próximo'}
+          {isLast ? (isReview ? 'Fechar Tutorial' : 'Iniciar Tutorial Prático') : 'Próximo'}
         </Text>
       </TouchableOpacity>
 

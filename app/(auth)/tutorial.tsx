@@ -15,6 +15,7 @@ import { AtmosferaSheet } from '../../components/layout/AtmosferaSheet';
 import { NutrirSoloSheet } from '../../components/layout/NutrirSoloSheet';
 import { COLORS } from '../../constants/colors';
 import { THRESHOLDS } from '../../constants/thresholds';
+import { useAppStore } from '../../store/appStore';
 import {
   TUTORIAL_HORTA_INICIAL,
   TUTORIAL_PLANETA,
@@ -168,6 +169,10 @@ export default function TutorialPratico() {
   const [soloControleVisible, setSoloControleVisible] = useState(false);
   const [atmosferaVisible, setAtmosferaVisible] = useState(false);
   const [sheetNutriente, setSheetNutriente] = useState<SoloNutrienteKey | null>(null);
+
+  const tutorialCompleted = useAppStore((s) => s.tutorialCompleted);
+  const completeTutorial = useAppStore((s) => s.completeTutorial);
+  const isMandatory = !tutorialCompleted;
 
   const current = STEPS[step];
   const isFirst = step === 0;
@@ -569,7 +574,11 @@ export default function TutorialPratico() {
 
         {/* HEADER */}
         <View style={s.header}>
-          <TouchableOpacity style={s.closeBtn} onPress={() => router.back()}>
+          <TouchableOpacity
+            style={[s.closeBtn, isMandatory && { opacity: 0 }]}
+            onPress={() => !isMandatory && router.back()}
+            disabled={isMandatory}
+          >
             <Text style={s.closeBtnText}>✕</Text>
           </TouchableOpacity>
           <View style={s.headerCenter}>
@@ -623,10 +632,24 @@ export default function TutorialPratico() {
 
           <TouchableOpacity
             style={[s.nextBtn, anyModalOpen && { opacity: 0 }]}
-            onPress={() => !anyModalOpen && (isLast ? router.back() : setStep((p) => p + 1))}
+            onPress={() => {
+              if (anyModalOpen) return;
+              if (isLast) {
+                if (isMandatory) {
+                  completeTutorial();
+                  router.replace('/(tabs)/estufa');
+                } else {
+                  router.back();
+                }
+              } else {
+                setStep((p) => p + 1);
+              }
+            }}
             disabled={anyModalOpen}
           >
-            <Text style={s.nextBtnText}>{isLast ? 'Concluir' : 'Próximo →'}</Text>
+            <Text style={s.nextBtnText}>
+              {isLast ? (isMandatory ? 'Iniciar Missão' : 'Concluir') : 'Próximo →'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
