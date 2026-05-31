@@ -24,7 +24,8 @@ export default function RootLayout() {
       <StatusBar style="light" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLORS.background } }}>
         <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(auth)/index" />
+        <Stack.Screen name="(auth)/tutorial" />
         <Stack.Screen name="(tabs)" />
       </Stack>
     </>

@@ -144,7 +144,7 @@ export function PlanetaInfoSheet({ visible, planeta, onClose }: Props) {
                 const sinal = r.sinal === '+' ? '+' : '−';
                 return (
                   <View key={r.simbolo} style={s.tableRow}>
-                    <View style={[s.tableCell, s.colRecurso, s.recursoCell]}>
+                    <View style={[s.colRecurso, s.recursoCell]}>
                       <View style={[s.simboloBadge, { borderColor: r.color + '70' }]}>
                         <Text style={[s.simboloText, { color: r.color }]}>{r.simbolo}</Text>
                       </View>

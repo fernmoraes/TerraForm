@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { Horta, Planeta, LogEntry, AtomKey, CompoundKey, AplicacaoAlvo } from '../types';
+import type { Horta, Planeta, LogEntry, AtomKey, CompoundKey, AplicacaoAlvo, NivelAlerta } from '../types';
 import { PLANETAS, SEED_HORTAS } from '../data/seed';
 import { REACTIONS } from '../data/reactions';
 import { PLANT_SPECIES_DATA, FASE_LABELS } from '../data/plants';
