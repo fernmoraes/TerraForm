@@ -96,7 +96,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 20,
     paddingVertical: 6,
     gap: 6,
   },
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     gap: 5,
-    maxWidth: 150,
+    maxWidth: 140,
   },
   dot: { width: 8, height: 8, borderRadius: 4 },
   planetImgSmall: { width: 20, height: 20, borderRadius: 10 },
