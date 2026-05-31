@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { View, Text, Image, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Image, FlatList, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { CustomAlert } from '../../components/ui/CustomAlert';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { router } from 'expo-router';
@@ -58,6 +58,28 @@ function buildAlertas(horta: Horta): Alerta[] {
 }
 
 type Filtro = 'horta' | 'planeta' | 'global';
+type LogTab = 'todos' | 'emergencias' | 'alertas' | 'plantas' | 'acoes' | 'estoque';
+
+type TabDef = { key: LogTab; label: string; emoji: string };
+const LOG_TABS: TabDef[] = [
+  { key: 'todos',       label: 'Todos',       emoji: '📋' },
+  { key: 'emergencias', label: 'Emergência',  emoji: '🚨' },
+  { key: 'alertas',     label: 'Alertas',     emoji: '⚠️' },
+  { key: 'plantas',     label: 'Plantas',     emoji: '🌱' },
+  { key: 'acoes',       label: 'Ações',       emoji: '💧' },
+  { key: 'estoque',     label: 'Estoque',     emoji: '📥' },
+];
+
+function filterByTab(entries: LogEntry[], tab: LogTab): LogEntry[] {
+  switch (tab) {
+    case 'emergencias': return entries.filter((e) => e.tipo === 'alerta' && e.nivel === 'critico');
+    case 'alertas':     return entries.filter((e) => e.tipo === 'alerta' && e.nivel === 'atencao');
+    case 'plantas':     return entries.filter((e) => e.tipo === 'crescimento');
+    case 'acoes':       return entries.filter((e) => e.tipo === 'aplicacao' || e.tipo === 'sintese');
+    case 'estoque':     return entries.filter((e) => e.tipo === 'reposicao');
+    default:            return entries;
+  }
+}
 
 const TIPO_EMOJI: Record<TipoLog, string> = {
   aplicacao: '💧', sintese: '🧪', reposicao: '📥',
@@ -92,6 +114,11 @@ type Group = {
 export default function LogsScreen() {
   const [filtro, setFiltro]         = useState<Filtro>('global');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [logTabs, setLogTabs]       = useState<Record<string, LogTab>>({});
+
+  const getLogTab = (hortaId: string): LogTab => logTabs[hortaId] ?? 'todos';
+  const setLogTab = (hortaId: string, tab: LogTab) =>
+    setLogTabs((prev) => ({ ...prev, [hortaId]: tab }));
 
   const logs              = useHortaStore((s) => s.logs);
   const planetas          = useHortaStore((s) => s.planetas);
@@ -235,8 +262,10 @@ export default function LogsScreen() {
               return acc;
             }, {} as Partial<Record<TipoLog, number>>);
 
-            const visibleEntries = g.entries.slice(0, MAX_VISIBLE);
-            const hiddenCount    = g.entries.length - MAX_VISIBLE;
+            const activeTab      = getLogTab(g.hortaId);
+            const tabEntries     = filterByTab(g.entries, activeTab);
+            const visibleEntries = tabEntries.slice(0, MAX_VISIBLE);
+            const hiddenCount    = tabEntries.length - MAX_VISIBLE;
 
             return (
               <View style={[styles.card, { borderColor: accentColor }]}>
@@ -314,38 +343,83 @@ export default function LogsScreen() {
                 {/* ── Entradas expandidas ── */}
                 {isExpanded && (
                   <View style={styles.expandedSection}>
-                    {visibleEntries.map((entry, idx) => {
-                      const isAlert = entry.nivel === 'critico' || entry.nivel === 'atencao';
-                      const entryColor =
-                        entry.nivel === 'critico' ? COLORS.critico
-                        : entry.nivel === 'atencao' ? COLORS.atencao
-                        : TIPO_COLOR[entry.tipo];
-                      const isLast = idx === visibleEntries.length - 1 && hiddenCount <= 0;
 
-                      return (
-                        <View
-                          key={entry.id}
-                          style={[styles.entryRow, isLast && styles.entryRowLast]}
-                        >
-                          <View style={[styles.entryDot, { backgroundColor: entryColor }]} />
-                          <Text style={styles.entryEmoji}>{TIPO_EMOJI[entry.tipo]}</Text>
-                          <Text
-                            style={[styles.entryDesc, isAlert && { color: entryColor, fontWeight: '600' }]}
-                            numberOfLines={1}
+                    {/* Abas de categoria */}
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.tabsScroll}
+                      contentContainerStyle={styles.tabsRow}
+                    >
+                      {LOG_TABS.map((tab) => {
+                        const count   = tab.key === 'todos' ? g.entries.length : filterByTab(g.entries, tab.key).length;
+                        const isActive = activeTab === tab.key;
+                        const tabColor = tab.key === 'emergencias' ? COLORS.critico
+                          : tab.key === 'alertas' ? COLORS.atencao
+                          : tab.key === 'plantas'  ? COLORS.verde
+                          : tab.key === 'acoes'    ? COLORS.ciano
+                          : tab.key === 'estoque'  ? COLORS.dourado
+                          : COLORS.textSecondary;
+                        const dimmed = !isActive && count === 0;
+                        return (
+                          <TouchableOpacity
+                            key={tab.key}
+                            style={[
+                              styles.tabBtn,
+                              isActive && { borderColor: tabColor, backgroundColor: tabColor + '18' },
+                              dimmed && { opacity: 0.3 },
+                            ]}
+                            onPress={() => setLogTab(g.hortaId, tab.key)}
+                            disabled={dimmed}
                           >
-                            {entry.descricao}
-                          </Text>
-                          <Text style={styles.entryTime}>
-                            {formatTimestampRelativo(entry.timestamp)}
-                          </Text>
-                        </View>
-                      );
-                    })}
+                            <Text style={styles.tabEmoji}>{tab.emoji}</Text>
+                            <Text style={[styles.tabLabel, isActive && { color: tabColor }]}>
+                              {tab.label}
+                            </Text>
+                            {count > 0 && (
+                              <View style={[styles.tabBadge, { backgroundColor: isActive ? tabColor : COLORS.border }]}>
+                                <Text style={styles.tabBadgeText}>{count}</Text>
+                              </View>
+                            )}
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
+
+                    {/* Entradas filtradas */}
+                    {visibleEntries.length === 0 ? (
+                      <Text style={styles.emptyTab}>Nenhum registro nesta categoria</Text>
+                    ) : (
+                      visibleEntries.map((entry, idx) => {
+                        const isAlert = entry.nivel === 'critico' || entry.nivel === 'atencao';
+                        const entryColor =
+                          entry.nivel === 'critico' ? COLORS.critico
+                          : entry.nivel === 'atencao' ? COLORS.atencao
+                          : TIPO_COLOR[entry.tipo];
+                        const isLastEntry = idx === visibleEntries.length - 1 && hiddenCount <= 0;
+                        return (
+                          <View
+                            key={entry.id}
+                            style={[styles.entryRow, isLastEntry && styles.entryRowLast]}
+                          >
+                            <View style={[styles.entryDot, { backgroundColor: entryColor }]} />
+                            <Text style={styles.entryEmoji}>{TIPO_EMOJI[entry.tipo]}</Text>
+                            <Text
+                              style={[styles.entryDesc, isAlert && { color: entryColor, fontWeight: '600' }]}
+                              numberOfLines={1}
+                            >
+                              {entry.descricao}
+                            </Text>
+                            <Text style={styles.entryTime}>
+                              {formatTimestampRelativo(entry.timestamp)}
+                            </Text>
+                          </View>
+                        );
+                      })
+                    )}
 
                     {hiddenCount > 0 && (
-                      <Text style={styles.moreText}>
-                        + {hiddenCount} eventos anteriores
-                      </Text>
+                      <Text style={styles.moreText}>+ {hiddenCount} eventos anteriores</Text>
                     )}
 
                     <View style={styles.actions}>
@@ -363,6 +437,16 @@ export default function LogsScreen() {
                       </TouchableOpacity>
                     </View>
                   </View>
+                )}
+
+                {/* Atalho para estufa quando há alertas ativos mas sem logs expandidos */}
+                {!isExpanded && g.alertas.length > 0 && (
+                  <TouchableOpacity
+                    style={styles.navigateBtnCompact}
+                    onPress={() => handleNavigate(g.hortaId, g.planetaId)}
+                  >
+                    <Text style={styles.navigateText}>Ir para Estufa  →</Text>
+                  </TouchableOpacity>
                 )}
               </View>
             );
@@ -450,7 +534,27 @@ const styles = StyleSheet.create({
   // Entradas
   expandedSection: {
     borderTopWidth: 1, borderTopColor: COLORS.border + '60',
-    paddingHorizontal: 14, paddingTop: 6, paddingBottom: 14,
+    paddingHorizontal: 14, paddingTop: 8, paddingBottom: 14,
+  },
+
+  // Abas de categoria
+  tabsScroll: { marginBottom: 10 },
+  tabsRow: { flexDirection: 'row', gap: 6, paddingBottom: 2 },
+  tabBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 4,
+    borderWidth: 1, borderColor: COLORS.border, borderRadius: 20,
+    paddingHorizontal: 10, paddingVertical: 5,
+    backgroundColor: COLORS.highlightGlass,
+  },
+  tabEmoji: { fontSize: 11 },
+  tabLabel: { color: COLORS.textSecondary, fontSize: 11, fontWeight: '600' },
+  tabBadge: {
+    borderRadius: 8, paddingHorizontal: 5, paddingVertical: 1, minWidth: 18, alignItems: 'center',
+  },
+  tabBadgeText: { color: '#000', fontSize: 9, fontWeight: 'bold' },
+  emptyTab: {
+    color: COLORS.textDim, fontSize: 12, textAlign: 'center',
+    paddingVertical: 14, fontStyle: 'italic',
   },
   entryRow: {
     flexDirection: 'row', alignItems: 'center',
@@ -503,6 +607,11 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.ciano,
     borderRadius: 10, paddingVertical: 11, alignItems: 'center',
+  },
+  navigateBtnCompact: {
+    backgroundColor: COLORS.ciano,
+    borderRadius: 10, paddingVertical: 11, alignItems: 'center',
+    marginHorizontal: 14, marginBottom: 14,
   },
   navigateText: { color: '#000', fontWeight: 'bold', fontSize: 14 },
 });
