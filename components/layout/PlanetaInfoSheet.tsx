@@ -1,4 +1,4 @@
-import { Modal, View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, Text, ScrollView, Pressable, TouchableOpacity, StyleSheet } from 'react-native';
 import { COLORS, NUTRIENT_COLORS, ATOM_COLORS } from '../../constants/colors';
 import { calcGravityFactor } from '../../utils/gravity';
 import {
@@ -88,8 +88,8 @@ export function PlanetaInfoSheet({ visible, planeta, onClose }: Props) {
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={s.overlay}>
-        <View style={s.sheet}>
+      <Pressable style={s.overlay} onPress={onClose}>
+        <Pressable style={s.sheet} onPress={() => {}}>
 
           {/* Header */}
           <View style={s.header}>
@@ -177,8 +177,8 @@ export function PlanetaInfoSheet({ visible, planeta, onClose }: Props) {
 
             <View style={{ height: 16 }} />
           </ScrollView>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }

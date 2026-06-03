@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { CustomAlert } from '../ui/CustomAlert';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { ProgressBar } from '../ui/ProgressBar';
@@ -71,8 +71,8 @@ export function AtmosferaSheet({ visible, horta, onAplicarH2OAr, onInjetarO2, on
   return (
     <>
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={s.overlay}>
-        <View style={s.sheet}>
+      <Pressable style={s.overlay} onPress={onClose}>
+        <Pressable style={s.sheet} onPress={() => {}}>
           <View style={s.header}>
             <Text style={s.title}>Controle da Atmosfera</Text>
             <TouchableOpacity onPress={onClose}><Text style={s.close}>✕</Text></TouchableOpacity>
@@ -168,8 +168,8 @@ export function AtmosferaSheet({ visible, horta, onAplicarH2OAr, onInjetarO2, on
             </View>
 
           </ScrollView>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
 
     <CustomAlert

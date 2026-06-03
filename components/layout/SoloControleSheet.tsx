@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { CustomAlert } from '../ui/CustomAlert';
 import { useCustomAlert } from '../../hooks/useCustomAlert';
 import { ProgressBar } from '../ui/ProgressBar';
@@ -77,8 +77,8 @@ export function SoloControleSheet({ visible, horta, onAplicarComposto, onClose }
   return (
     <>
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={s.overlay}>
-        <View style={s.sheet}>
+      <Pressable style={s.overlay} onPress={onClose}>
+        <Pressable style={s.sheet} onPress={() => {}}>
           <View style={s.header}>
             <Text style={s.title}>Controle do Solo</Text>
             <TouchableOpacity onPress={onClose}><Text style={s.close}>✕</Text></TouchableOpacity>
@@ -213,8 +213,8 @@ export function SoloControleSheet({ visible, horta, onAplicarComposto, onClose }
             </View>
 
           </ScrollView>
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
 
     <CustomAlert

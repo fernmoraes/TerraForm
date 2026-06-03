@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, Pressable, StyleSheet } from 'react-native';
 import { ProgressBar } from '../ui/ProgressBar';
 import { COLORS, NUTRIENT_COLORS } from '../../constants/colors';
 import { clamp } from '../../utils/formatters';
@@ -44,8 +44,8 @@ export function NutrirSoloSheet({ visible, nutriente, horta, onAplicar, onClose 
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.overlay}>
-        <View style={styles.sheet}>
+      <Pressable style={styles.overlay} onPress={onClose}>
+        <Pressable style={styles.sheet} onPress={() => {}}>
 
           {/* Header */}
           <View style={styles.header}>
@@ -161,8 +161,8 @@ export function NutrirSoloSheet({ visible, nutriente, horta, onAplicar, onClose 
             </TouchableOpacity>
           </View>
 
-        </View>
-      </View>
+        </Pressable>
+      </Pressable>
     </Modal>
   );
 }

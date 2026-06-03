@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ScrollView, View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, Modal, Pressable, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
 import { GradientBackground } from '../../components/ui/GradientBackground';
 import { NivelIndicator } from '../../components/ui/NivelIndicator';
@@ -279,8 +279,8 @@ export default function EstufaScreen() {
         animationType="slide"
         onRequestClose={() => setNutrirTudoVisible(false)}
       >
-        <View style={styles.overlay}>
-          <View style={styles.sheet}>
+        <Pressable style={styles.overlay} onPress={() => setNutrirTudoVisible(false)}>
+          <Pressable style={styles.sheet} onPress={() => {}}>
             <Text style={styles.sheetTitle}>⚡ Nutrir Tudo</Text>
             <Text style={styles.sheetSub}>
               Selecione os nutrientes e a quantidade. Apenas os galões com estoque suficiente podem ser selecionados.
@@ -396,8 +396,8 @@ export default function EstufaScreen() {
                 </Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </View>
+          </Pressable>
+        </Pressable>
       </Modal>
     </GradientBackground>
   );
